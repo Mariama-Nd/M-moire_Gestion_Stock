@@ -1,0 +1,7 @@
+.column-bg {
+    background-color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+}

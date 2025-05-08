@@ -1,0 +1,57 @@
+/*
+<script>
+  
+    document.addEventListener('DOMContentLoaded', function () {
+        const modal = document.getElementById("productModal");
+        const openModalButton = document.getElementById("openModalButton");
+        const closeButton = document.getElementsByClassName("close")[0];
+
+        openModalButton.onclick = function() {
+            modal.style.display = "block";
+        }
+
+        closeButton.onclick = function() {
+            modal.style.display = "none";
+        }
+
+        window.onclick = function(event) {
+            if (event.target == modal) {
+                modal.style.display = "none";
+            }
+        }
+
+        document.querySelectorAll('.product-item input[type="checkbox"]').forEach(checkbox => {
+            checkbox.addEventListener('change', function() {
+                const quantityInput = this.parentElement.querySelector('.quantity-input');
+                quantityInput.disabled = !this.checked;
+                if (!this.checked) {
+                    quantityInput.value = '';
+                }
+            });
+        });
+    });
+    
+</script>
+*/
+
+/*     filtrage   */ 
+/*html
+<input type="number" id="stock-filter" placeholder="Filtrer par stock inférieur à">
+    <button onclick="filterProducts()" class="btn btn-success">Filtrer</button><br><br><br>
+*/
+    
+//js
+
+    function filterProducts() {
+            const filterValue = document.getElementById('stock-filter').value;
+            const rows = document.querySelectorAll('#sales-table tbody tr');
+
+            rows.forEach(row => {
+                const stock = row.querySelector('.stock').textContent;
+                if (parseInt(stock) < filterValue) {
+                    row.classList.add('low-stock');
+                } else {
+                    row.classList.remove('low-stock');
+                }
+            });
+        }
