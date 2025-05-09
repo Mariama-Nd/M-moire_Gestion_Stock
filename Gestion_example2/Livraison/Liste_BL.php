@@ -549,13 +549,12 @@
         <table id="sales-table" class="table align-middle table-row-dashed fs-6 gy-5 " style="background-color: white;">
         <thead>
             <tr class="text-start text-gray-400 fw-bolder fs-7 text-uppercase gs-0">
+                <th></th>
                 <th>Nom</th>
-                <th></th>
                 <th>Date Creation</th>
-                <th>Etat de la Commande</th>
+                <th>Commande Associée</th>
+                <th>Etat de la Livraison</th>
                 <th>Action</th>
-                <th></th>
-                <th></th>
             </tr>
         </thead>
         <tbody class="text-gray-600 fw-bold"></tbody>
@@ -570,12 +569,12 @@
         <div class="modal-content">
             <span class="close">&times;</span>
             <form id="productForm" method="post" >
-                <label for="product-name"><b>Bon de Commande :</b></label>
+                <label for="product-name"><b>Commande :</b></label>
                 <select class="form-select" id="product-name" name="bc" required>
-                    <option value="" selected>Sélectionnez un Bon de Commande</option>
+                    <option value="" selected>Sélectionnez une Commande</option>
                 </select><br>
 
-                <label for="nomBL"><b>Nom du Bon:</b></label>
+                <label for="nomBL"><b>Nom de la Livraison:</b></label>
                 <input type="text" id="nomBL" name="nomBL" required><br><br>
 
                 <label for="bordereau"><b>Numero Bordereau_de_Livraison :</b></label>

@@ -590,7 +590,7 @@
   <form id="add-sale-form" method="post">
         <label for="product-name">Sous Catégorie</label>
         <select class="form-select" id="product-name" name="idSC" aria-label="Sélectionnez une catégorie">
-            <option value="">Sélectionnez une catégorie</option>
+            <option value="">Sélectionnez une Sous-catégorie</option>
         </select>
 
         <label for="quantity">Nom du Produit</label>
@@ -620,11 +620,12 @@
           <div id="productsContainer">
             <div class="product-form">
               <h4>Produit 1</h4>
-              <label>Categorie:</label>
+
+              <label>Sous-Catégorie:</label>
               <select class="form-select" id="product-name" name="idSC" aria-label="Sélectionnez une catégorie">
-        <option value="" >Sélectionnez une catégorie</option>
-       
-      </select>
+                <option value="" >Sélectionnez une Sous-catégorie</option> 
+              </select>
+
               <label>Nom du produit:</label>
               <input type="text" name="productName[]" required id="productName[]">
 

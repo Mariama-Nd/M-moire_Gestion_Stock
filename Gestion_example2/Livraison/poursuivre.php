@@ -620,7 +620,7 @@ $nomBL = $_GET["nomBL"];
                 </div>
 <form id="bonForm" method="post">
         
-        <h1>Bon de Livraison: <?php echo '<b>' . $nomBL . '</b>'; ?></h1>
+        <h1>Livraison: <?php echo '<b>' . $nomBL . '</b>'; ?></h1>
        
         <div id="productList" class="product-list">
             <!-- Les produits enregistrés seront ajoutés ici par JavaScript -->

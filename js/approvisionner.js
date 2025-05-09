@@ -21,12 +21,12 @@ document.addEventListener('DOMContentLoaded', function () {
                             
                         <span id="quantite_cmd${product.idP}" hidden="true">${product.quantite}</span>
                         <input type="number" name="quantity[]" min="0" id="${product.idP}" disabled placeholder="Quantite Recus">
+
                         <label for="prod-${product.idP}"><b>Prix Unitaire (CFA)</b></label>
                         <input type="number" name="prix[]" class="product-price" min="0" id="prix${product.idP}" disabled placeholder="Prix Produit">
 
- <label for="prod${product.idP}"><b>unité</b></label>
+                        <label for="prod${product.idP}"><b>unité</b></label>
                         <input type="text" name="unite[]" class="product-unite" id="unite${product.idP}" disabled placeholder="(piece,caroton,boîte)">
-
                         
                         <input type="hidden" name="idBL" value="${idBL}">
                         <button type="button" class="partielle-save" data-idp="${product.idP}">Enregistrer</button>
@@ -125,7 +125,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     modifyProduct(idP, idBL, quantity, prix,unite);
                 });
                 const deleteButton = document.createElement('button');
-                deleteButton.textContent = 'Supprimer';
+                deleteButton.textContent = 'Retirer';
                 deleteButton.className = 'delete';
                 deleteButton.style.backgroundColor = 'red';
                 deleteButton.addEventListener('click', function () {

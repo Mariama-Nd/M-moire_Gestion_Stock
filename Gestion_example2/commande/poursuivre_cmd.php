@@ -294,7 +294,6 @@ $idbon = $_GET["idbon"];
                                    
                                 </div>
                               
-                              
                                 
                             </div>
                             <div data-kt-menu-trigger="click" class="menu-item menu-accordion">
@@ -333,9 +332,7 @@ $idbon = $_GET["idbon"];
                                         </a>
                                     </div>
                                    
-                                </div>
-                              
-                              
+                                </div>                                                            
                                 
                             </div>
 
@@ -375,8 +372,7 @@ $idbon = $_GET["idbon"];
                                         </a>
                                     </div>
                                    
-                                </div>
-                              
+                                </div>                              
                               
                                 
                             </div>
@@ -457,8 +453,7 @@ $idbon = $_GET["idbon"];
                                         </a>
                                     </div>
                                    
-                                </div>
-                              
+                                </div>                              
                               
                                 
                             </div>

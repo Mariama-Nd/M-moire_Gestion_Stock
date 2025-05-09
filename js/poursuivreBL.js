@@ -45,7 +45,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 
                             <div class="d-flex justify-content-between">
                                 <button type="button" class="btn btn-warning modify">Modifier</button>
-                                <button type="button" class="btn btn-danger delete">Supprimer</button>
+                                <button type="button" class="btn btn-danger delete">Retirer</button>
                             </div>
                         </div>
                     `;
