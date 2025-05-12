@@ -11,7 +11,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 const productList = document.getElementById('productList');
                 data.products.forEach(product => {
                     const productItem = document.createElement('div');
-                    productItem.className = 'product-item card mb-3 shadow-sm';  // Utilisation de la carte pour un design propre
+                    productItem.className = 'product-item card mb-3 shadow-sm';
                     productItem.dataset.idp = product.idP;
                     productItem.innerHTML = `
                         <span id="idPorduit${product.idP}" hidden="true">${product.idP}</span>
@@ -36,22 +36,28 @@ document.addEventListener('DOMContentLoaded', function () {
                                 <label for="prod${product.idP}" class="form-label"><b>Prix Unitaire (CFA)</b></label>
                                 <input type="number" name="prix[]" min="0" id="prix${product.idP}" class="form-control" value="${product.prix_unitaire}">
                             </div>
-                </div>
-                           
-                            <div class="mb-3">
-                                <label for="prod${product.idP}" class="form-label"><b>Unité (pièce, boîte, carton)</b></label>
-                                <input type="text" name="unite[]" id="unite${product.idP}" class="form-control" value="${product.unite}">
-                            </div>
-                
-                            <div class="d-flex justify-content-between">
-                                <button type="button" class="btn btn-warning modify">Modifier</button>
-                                <button type="button" class="btn btn-danger delete">Retirer</button>
-                            </div>
                         </div>
+
+                        <div class="mb-3">
+                            <label for="prod${product.idP}" class="form-label"><b>Unité (pièce, boîte, carton)</b></label>
+                            <select name="unite[]" id="unite${product.idP}" class="form-control">
+                                <option value="">-- unité --</option>
+                                <option value="pièce" ${product.unite === 'pièce' ? 'selected' : ''}>pièce</option>
+                                <option value="carton" ${product.unite === 'carton' ? 'selected' : ''}>carton</option>
+                                <option value="boîte" ${product.unite === 'boîte' ? 'selected' : ''}>boîte</option>
+                            </select>
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <button type="button" class="btn ${product.reste > 0 ? 'btn-success' : 'btn-warning'} ${product.reste > 0 ? 'add' : 'modify'}">
+                                ${product.reste > 0 ? 'Enregistrer' : 'Modifier'}
+                            </button>
+                            <button type="button" class="btn btn-danger delete">Retirer</button>
+                        </div>
+                    </div>
                     `;
                     productList.appendChild(productItem);
                 });
-                
                 addEventListeners();
             } else {
                 const productList = document.getElementById('productList');
@@ -62,75 +68,20 @@ document.addEventListener('DOMContentLoaded', function () {
             console.error('Erreur lors de la récupération des produits enregistrés :', error);
         });
 
-    // Récupérer les autres produits du bon de commande
-    fetch(`../../controlleur/controlleur.php?option=31&idBL=${idBL}`)
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                const productList = document.getElementById('productListNE');
-                data.products.forEach(product => {
-                    const productItem = document.createElement('div');
-                    productItem.className = 'product-item';
-                    productItem.dataset.idp = product.idP;
-                    productItem.innerHTML = `
-                        <input type="checkbox" id="prod${product.idP}" name="products[]" value="${product.idP}">
-
-                        <label for="prod${product.idP}" class="product-name"><b>${product.nomproduit} <br> (Reste:${product.reste})</b></label><br>
-                        <input type="number" name="quantity[]" min="0" disabled id="${product.idP}" placeholder="Quantite Recus">
-
-                        <label for="prod${product.idP}"><b>Prix Unitaire (CFA)</b></label>
-                        <input type="number" name="prix[]" class="product-price" min="0" id="prix${product.idP}" disabled placeholder="Prix Produit">
-
-                         <label for="prod${product.idP}"><b>unité(piece,caroton,boîte)</b></label>
-                        <input type="text" name="unite[]" class="product-price" id="unite${product.idP}" disabled placeholder="Prix Produit">
-
-                        <button type="button" class="partielle-save" data-idp="${product.idP}">Enregistrer</button>
-                    `;
-                    productList.appendChild(productItem);
-                });
-                addEventListeners();
-            } else {
-                const productList = document.getElementById('productList');
-                productList.innerHTML = `<p>${data.message}</p>`;
-            }
-        })
-        .catch(error => {
-            console.error('Erreur lors de la récupération des autres produits du bon de commande :', error);
-        });
-
     function addEventListeners() {
-        document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
-            checkbox.addEventListener('change', function () {
-                const productItem = checkbox.closest('.product-item');
-                const quantityInput = productItem.querySelector('input[name="quantity[]"]');
-                const priceInput = productItem.querySelector('input[name="prix[]"]');
-                const uniteInput = productItem.querySelector('input[name="unite[]"]');
-                const isChecked = checkbox.checked;
-                quantityInput.disabled = !isChecked;
-                priceInput.disabled = !isChecked;
-                uniteInput.disabled = !isChecked;
-            });
-        });
-
-        document.querySelectorAll('input[name="products[]"]').forEach(checkbox => {
-            checkbox.checked = false;
-            const quantityInput = checkbox.parentElement.querySelector('input[type="number"]');
-            quantityInput.disabled = true;
-            quantityInput.value = '';
-        });
-
-        document.querySelectorAll('.partielle-save').forEach(button => {
-            button.addEventListener('click', function () {
-                const idP = button.getAttribute('data-idp');
-                saveProduct(idP);
-            });
-        });
-
         document.querySelectorAll('.modify').forEach(button => {
             button.addEventListener('click', function () {
                 const productItem = button.closest('.product-item');
                 const idP = productItem.getAttribute('data-idp');
-                modifyProduct(idP);
+                replaceProduct(idP);
+            });
+        });
+
+        document.querySelectorAll('.add').forEach(button => {
+            button.addEventListener('click', function () {
+                const productItem = button.closest('.product-item');
+                const idP = productItem.getAttribute('data-idp');
+                addProduct(idP);
             });
         });
 
@@ -139,50 +90,69 @@ document.addEventListener('DOMContentLoaded', function () {
                 const productItem = button.closest('.product-item');
                 const idP = productItem.getAttribute('data-idp');
                 const quantity = document.getElementById('quantity' + idP).value;
-                deleteProduct(idP, quantity);
+                const unite = document.getElementById('unite' + idP).value;
+                deleteProduct(idP, quantity, unite);
             });
         });
     }
 
-       document.getElementById('enregistrerTout').addEventListener('click', function () {
+    document.getElementById('enregistrerTout').addEventListener('click', function () {
         const selectedProducts = [];
         const quantities = [];
-        const price = [];
+        const prices = [];
+        const unites = [];
         const invalidProducts = [];
-        const invalidProducts_price = [];
     
-        document.querySelectorAll('input[name="products[]"]:checked').forEach(checkbox => {
-            const productId = checkbox.value;
-            const quantityInput = checkbox.parentElement.querySelector('input[type="number"]');
-            const quantity = quantityInput.value.trim();
-            const productName = checkbox.parentElement.querySelector('.product-name').textContent;
-            const prix = checkbox.parentElement.querySelector('.product-price').value;
+        document.querySelectorAll('.product-item').forEach(item => {
+            const idP = item.dataset.idp;
+            const quantityInput = document.getElementById('quantity' + idP);
+            const prixInput = document.getElementById('prix' + idP);
+            const uniteInput = document.getElementById('unite' + idP);
     
-            if (!quantity || isNaN(quantity) || parseFloat(quantity) <= 0 ) {
-                invalidProducts.push(productName);
-            } else {
-                selectedProducts.push(productId);
-                quantities.push(quantity);
-                price.push(prix);
-            }
+            const quantity = parseFloat(quantityInput.value);
+            const prix = parseFloat(prixInput.value);
+            const unite = uniteInput.value;
     
-            if (!prix || isNaN(prix) || parseFloat(prix) <= 0) {
-                invalidProducts_price.push(productName);
+            // Valeurs initiales
+            const initialQuantite = parseFloat(item.querySelector('#quantite_product' + idP)?.textContent || 0);
+            const initialPrix = parseFloat(item.querySelector('#prix_product' + idP)?.textContent || 0);
+            const initialUnite = item.querySelector('#unite_product' + idP)?.textContent || "";
+    
+            // Vérifier si une modification a été faite
+            const hasChanged = (
+                quantity !== initialQuantite ||
+                prix !== initialPrix ||
+                unite !== initialUnite
+            );
+    
+            if (hasChanged) {
+                if (isNaN(quantity) || quantity <= 0 || isNaN(prix) || prix <= 0 || !unite) {
+                    const nomProduit = item.querySelector('.card-title')?.textContent || 'Produit';
+                    invalidProducts.push(nomProduit);
+                } else {
+                    selectedProducts.push(idP);
+                    quantities.push(quantity);
+                    prices.push(prix);
+                    unites.push(unite);
+                }
             }
         });
     
         if (invalidProducts.length > 0) {
-            alert("Veuillez entrer une Quantité valide pour les produits suivants :\n" + invalidProducts.join(', '));
-            return;
-        }
-    
-        if (invalidProducts_price.length > 0) {
-            alert("Veuillez entrer un Prix valide pour les produits suivants :\n" + invalidProducts_price.join(', '));
+            Swal.fire({
+                icon: 'warning',
+                title: 'Champs invalides',
+                html: `Veuillez corriger les champs suivants :<br><b>${invalidProducts.join(', ')}</b>`,
+            });
             return;
         }
     
         if (selectedProducts.length === 0) {
-            alert("Aucun produit sélectionné.");
+            Swal.fire({
+                icon: 'info',
+                title: 'Aucune modification détectée',
+                text: "Aucun produit n'a été modifié.",
+            });
             return;
         }
     
@@ -190,12 +160,12 @@ document.addEventListener('DOMContentLoaded', function () {
         formData.append('option', 33);
         formData.append('products', JSON.stringify(selectedProducts));
         formData.append('quantity', JSON.stringify(quantities));
-        formData.append('prix', JSON.stringify(price));
+        formData.append('prix', JSON.stringify(prices));
+        formData.append('unite', JSON.stringify(unites));
         formData.append('nomBL', nomBL);
         formData.append('idBC', idBC);
         formData.append('idBL', idBL);
         formData.append('enregistrerTout', true);
-    
     
         fetch('../../controlleur/controlleur.php', {
             method: 'POST',
@@ -203,14 +173,13 @@ document.addEventListener('DOMContentLoaded', function () {
         })
         .then(response => response.json())
         .then(data => {
-        
             if (data.success) {
                 Swal.fire({
                     icon: 'success',
                     title: 'Succès',
-                    text: 'Enregistrement réussi.',
+                    text: 'Produits modifiés avec succès.',
                 }).then(() => {
-                    window.location.href = "Liste_BL.php"; 
+                    location.reload();
                 });
             } else {
                 if (data.produitsIncoherents && data.produitsIncoherents.length > 0) {
@@ -218,31 +187,19 @@ document.addEventListener('DOMContentLoaded', function () {
                     data.produitsIncoherents.forEach(prod => {
                         message += `${prod.nomProduit} (Quantité saisie: ${prod.quantiteSaisie}, Reste à livrer: ${prod.reste})\n`;
                     });
-        
-                    Swal.fire({
-                        icon: 'warning',
-                        title: 'Attention',
-                        text: message,
-                    });
+                    Swal.fire({ icon: 'warning', title: 'Attention', text: message });
                 } else {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Erreur',
-                        text: data.message || "Échec de l'enregistrement.",
-                    });
+                    Swal.fire({ icon: 'error', title: 'Erreur', text: data.message || "Échec de l'enregistrement." });
                 }
             }
         })
         .catch(error => {
-            Swal.fire({
-                icon: 'error',
-                title: 'Erreur',
-                text: 'Erreur de connexion au serveur.',
-            });
             console.error("Erreur :", error);
+            Swal.fire({ icon: 'error', title: 'Erreur serveur', text: 'Erreur de connexion au serveur.' });
         });
-        
     });
+    
+    
 
     function saveProduct(idP) {
      
@@ -361,78 +318,81 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    function modifyProduct(idP) {
-        const productItem = document.querySelector(`.product-item[data-idp="${idP}"]`);
-        const quantityInput = productItem.querySelector('input[type="number"]');
-        const currentQuantity = quantityInput.value;
-        const current_price = document.getElementById("prix" + idP).value;
-        const current_unite = document.getElementById("unite" + idP).value;
-        let reste = document.getElementById("reste" + idP).innerHTML;
-    
-   
-        if (currentQuantity === null || current_price == null || current_unite == null) {
+    function addProduct(idP) {
+        const quantity = parseFloat(document.getElementById("quantity" + idP).value);
+        const prix = parseFloat(document.getElementById("prix" + idP).value);
+        const unite = document.getElementById("unite" + idP).value;
+
+        if (isNaN(quantity) || quantity <= 0 || isNaN(prix) || prix <= 0 || unite === '') {
+            Swal.fire({ icon: 'warning', title: 'Champs requis', text: 'Veuillez remplir correctement les champs.' });
             return;
-        } else if (currentQuantity.trim() === "" || current_price.trim() == '' || current_unite.trim() == '') {
-          
-            Swal.fire({
-                icon: 'warning',
-                title: 'Entrée vide',
-                text: "L'entrée est vide. Veuillez entrer une valeur.",
-            });
-        } else if (isNaN(currentQuantity) || parseFloat(currentQuantity) < 0 || isNaN(current_price) || parseFloat(current_price) < 0) {
-            Swal.fire({
-                icon: 'warning',
-                title: 'Valeur invalide',
-                text: "Veuillez entrer un nombre valide supérieur à 0.",
-            });
-        } else if (currentQuantity > reste) {
-            Swal.fire({
-                icon: 'warning',
-                title: 'Quantité invalide',
-                text: "Impossible de poursuivre cette action ! L'intégralité du produit a été livrée.",
-            });
-        } else {
-            const formData = new FormData();
-            formData.append('option', 25);
-            formData.append('idBL', idBL);
-            formData.append('idP', idP);
-            formData.append('quantity', currentQuantity);
-            formData.append('prix', current_price);
-            formData.append('unite', current_unite);
-    
-            fetch('../../controlleur/controlleur.php', {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Succès',
-                        text: 'Modification réussie.',
-                    }).then(() => {
-                        quantityInput.value = currentQuantity;
-                        location.reload();
-                    });
-                } else {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Erreur',
-                        text: "Erreur : " + data.message,
-                    });
-                }
-            })
-            .catch(error => {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Erreur',
-                    text: 'Erreur de connexion avec le serveur.',
-                });
-                console.error("Erreur :", error);
-            });
         }
+
+        const formData = new FormData();
+        formData.append('option', 25);
+        formData.append('idBL', idBL);
+        formData.append('idBC', idBC);
+        formData.append('idP', idP);
+        formData.append('quantity', quantity);
+        formData.append('prix', prix);
+        formData.append('unite', unite);
+
+        fetch('../../controlleur/controlleur.php', {
+            method: 'POST',
+            body: formData
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                Swal.fire({ icon: 'success', title: 'Succès', text: 'Quantité mise à jour.' }).then(() => location.reload());
+            } else {
+                Swal.fire({ icon: 'error', title: 'Erreur', text: data.message });
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            Swal.fire({ icon: 'error', title: 'Erreur serveur', text: 'Impossible de traiter la requête.' });
+        });
     }
+
+    function replaceProduct(idP) {
+        const quantity = parseFloat(document.getElementById("quantity" + idP).value);
+        const prix = parseFloat(document.getElementById("prix" + idP).value);
+        const unite = document.getElementById("unite" + idP).value;
+
+        if (isNaN(quantity) || quantity <= 0 || isNaN(prix) || prix <= 0 || unite === '') {
+            Swal.fire({ icon: 'warning', title: 'Champs requis', text: 'Veuillez remplir correctement les champs.' });
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('option', 25);
+        formData.append('idBL', idBL);
+        formData.append('idBC', idBC);
+        formData.append('idP', idP);
+        formData.append('quantity', quantity);
+        formData.append('prix', prix);
+        formData.append('unite', unite);
+        formData.append('mode', 'remplacement'); // pour indiquer au PHP que c’est une logique remplacement
+
+        fetch('../../controlleur/controlleur.php', {
+            method: 'POST',
+            body: formData
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                Swal.fire({ icon: 'success', title: 'Modification', text: 'Mise à jour réussie.' }).then(() => location.reload());
+            } else {
+                Swal.fire({ icon: 'error', title: 'Erreur', text: data.message });
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            Swal.fire({ icon: 'error', title: 'Erreur serveur', text: 'Impossible de traiter la requête.' });
+        });
+    }
+    
     
     document.getElementById('bonForm').addEventListener('submit', function (event) {
         event.preventDefault(); // Empêche la soumission du formulaire

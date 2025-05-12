@@ -21,7 +21,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 
                         <div class="card-header">
                             <h5 class="card-title">${product.nomproduit} <span class="text-muted">(Reste: ${product.reste})</span></h5>
-                            <h5 class="card-title ">${product.nomproduit} <span class="" style="color:red">( Stock actuel : ${product.Stock_actuel})</span></h5>
+                            <h5 class="card-title "> <span class="" style="color:red">( Stock actuel : ${product.Stock_actuel})</span></h5>
                         </div>
                 
                         <div class="card-body">

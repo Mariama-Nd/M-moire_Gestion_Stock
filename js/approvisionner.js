@@ -26,7 +26,12 @@ document.addEventListener('DOMContentLoaded', function () {
                         <input type="number" name="prix[]" class="product-price" min="0" id="prix${product.idP}" disabled placeholder="Prix Produit">
 
                         <label for="prod${product.idP}"><b>unité</b></label>
-                        <input type="text" name="unite[]" class="product-unite" id="unite${product.idP}" disabled placeholder="(piece,caroton,boîte)">
+                        <select name="unite[]" class="product-unite" id="unite${product.idP}" disabled>
+                            <option value="">-- unité --</option>
+                            <option value="pièce">pièce</option>
+                            <option value="carton">carton</option>
+                            <option value="boîte">boîte</option>
+                        </select>
                         
                         <input type="hidden" name="idBL" value="${idBL}">
                         <button type="button" class="partielle-save" data-idp="${product.idP}">Enregistrer</button>
@@ -34,7 +39,6 @@ document.addEventListener('DOMContentLoaded', function () {
                     productList.appendChild(productItem);
                 });
 
-                // Activer/désactiver les champs de quantité et de prix en fonction de la sélection du produit
                 document.querySelectorAll('.product-item input[type="checkbox"]').forEach(checkbox => {
                     checkbox.addEventListener('change', function () {
                         const productId = this.value;
@@ -54,7 +58,6 @@ document.addEventListener('DOMContentLoaded', function () {
                     });
                 });
 
-                // Enregistrer partiellement un produit
                 document.querySelectorAll('.partielle-save').forEach(button => {
                     button.addEventListener('click', function () {
                         const productId = this.getAttribute('data-idp');
@@ -71,9 +74,10 @@ document.addEventListener('DOMContentLoaded', function () {
             console.error("Produit non trouvé pour l'ID: " + idP);
             return;
         }
+
         const checkbox = productItem.querySelector('input[type="checkbox"]');
         const quantityInput = productItem.querySelector('input[type="number"]');
-        const uniteInput = productItem.querySelector('input[type="text"]');
+        const uniteInput = productItem.querySelector('select.product-unite');
         const prix = document.getElementById('prix' + idP).value;
         let coherance_avec_Q_cmd = document.getElementById('quantite_cmd' + idP).innerText;
 
@@ -84,6 +88,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         const quantity = quantityInput.value.trim();
         const unite = uniteInput.value.trim();
+
         if (!quantity || isNaN(quantity) || parseFloat(quantity) <= 0 || quantity > coherance_avec_Q_cmd) {
             alert("Veuillez entrer une quantité valide.");
             return;
@@ -116,22 +121,22 @@ document.addEventListener('DOMContentLoaded', function () {
                     text: data.message,
                 });
 
-                // Créer les boutons "Modifier" et "Supprimer"
                 const modifyButton = document.createElement('button');
                 modifyButton.textContent = 'Modifier';
                 modifyButton.className = 'modify';
                 modifyButton.style.backgroundColor = 'orange';
                 modifyButton.addEventListener('click', function () {
-                    modifyProduct(idP, idBL, quantity, prix,unite);
+                    modifyProduct(idP, idBL);
                 });
+
                 const deleteButton = document.createElement('button');
                 deleteButton.textContent = 'Retirer';
                 deleteButton.className = 'delete';
                 deleteButton.style.backgroundColor = 'red';
                 deleteButton.addEventListener('click', function () {
-                    deleteProduct(idP, quantity,unite);
+                    deleteProduct(idP, quantity);
                 });
-                // Remplacer le bouton "Enregistrer" par les nouveaux boutons
+
                 const saveButton = productItem.querySelector('.partielle-save');
                 productItem.removeChild(saveButton);
                 productItem.appendChild(modifyButton);
@@ -148,7 +153,6 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-   
     document.getElementById('enregistrerTout').addEventListener('click', function () {
         const selectedProducts = [];
         const quantities = [];
@@ -160,12 +164,10 @@ document.addEventListener('DOMContentLoaded', function () {
         document.querySelectorAll('input[name="products[]"]:checked').forEach(checkbox => {
             const productId = checkbox.value;
             const quantityInput = checkbox.parentElement.querySelector('input[type="number"]');
-          
             const quantity = quantityInput.value.trim();
-            
             const productName = checkbox.parentElement.querySelector('.product-name').textContent;
             const prix = checkbox.parentElement.querySelector('.product-price').value;
-            const unitee= checkbox.parentElement.querySelector('.product-unite').textContent;
+            const unitee = checkbox.parentElement.querySelector('.product-unite').value.trim();
 
             if (!quantity || isNaN(quantity) || parseFloat(quantity) <= 0) {
                 invalidProducts.push(productName);
@@ -207,16 +209,11 @@ document.addEventListener('DOMContentLoaded', function () {
             enregistrerTout: true,
         };
 
-        console.log("Données envoyées : ", JSON.stringify(data)); 
-
-      
-    fetch('../../controlleur/controlleur.php?option=27', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(data)
-    })
+        fetch('../../controlleur/controlleur.php?option=27', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        })
         .then(response => response.json())
         .then(data => {
             if (data.success) {
@@ -243,26 +240,18 @@ document.addEventListener('DOMContentLoaded', function () {
     function modifyProduct(idP, idBL) {
         const productItem = document.querySelector(`.product-item[data-idp="${idP}"]`);
         const quantityInput = productItem.querySelector('input[type="number"]');
-        const uniteInput = productItem.querySelector('input[type="text"]');
+        const uniteInput = productItem.querySelector('select.product-unite');
         const currentQuantity = quantityInput.value;
         const currentUnite = uniteInput.value;
         const current_price = document.getElementById("prix" + idP).value;
         let coherance_avec_Q_cmd = document.getElementById('quantite_cmd' + idP).innerText;
-    
-        if (currentQuantity === null || current_price == null) {
-            return;
-        } else if (currentQuantity.trim() === "" || current_price.trim() == '') {
-            Swal.fire({
-                icon: 'warning',
-                title: 'Entrée invalide',
-                text: 'L\'entrée est vide. Veuillez entrer une valeur.',
-            });
+
+        if (currentQuantity === null || current_price == null) return;
+
+        if (currentQuantity.trim() === "" || current_price.trim() === "") {
+            Swal.fire({ icon: 'warning', title: 'Entrée invalide', text: 'Veuillez remplir tous les champs.' });
         } else if (isNaN(currentQuantity) || parseFloat(currentQuantity) < 0 || isNaN(current_price) || parseFloat(current_price) < 0 || currentQuantity > coherance_avec_Q_cmd) {
-            Swal.fire({
-                icon: 'warning',
-                title: 'Quantité invalide',
-                text: 'Veuillez entrer un nombre valide supérieur à 0.',
-            });
+            Swal.fire({ icon: 'warning', title: 'Quantité invalide', text: 'Veuillez entrer une valeur valide.' });
         } else {
             const formData = new FormData();
             formData.append('option', 25);
@@ -271,7 +260,7 @@ document.addEventListener('DOMContentLoaded', function () {
             formData.append('quantity', currentQuantity);
             formData.append('prix', current_price);
             formData.append('unite', currentUnite);
-    
+
             fetch('../../controlleur/controlleur.php', {
                 method: 'POST',
                 body: formData
@@ -279,32 +268,16 @@ document.addEventListener('DOMContentLoaded', function () {
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Modification réussie',
-                        text: 'Les modifications ont été enregistrées avec succès.',
-                    }).then(() => {
-                        quantityInput.value = currentQuantity;
-                    });
+                    Swal.fire({ icon: 'success', title: 'Modification réussie', text: 'Produit mis à jour.' });
                 } else {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Erreur',
-                        text: 'Erreur : ' + data.message,
-                    });
+                    Swal.fire({ icon: 'error', title: 'Erreur', text: data.message });
                 }
             })
             .catch(error => {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Erreur serveur',
-                    text: 'Erreur de connexion avec le serveur.',
-                });
-                console.error('Erreur lors de la modification du produit :', error);
+                Swal.fire({ icon: 'error', title: 'Erreur serveur', text: 'Erreur de connexion.' });
             });
         }
     }
-    
 
     function deleteProduct(idP, quantity) {
         Swal.fire({
@@ -317,42 +290,28 @@ document.addEventListener('DOMContentLoaded', function () {
             reverseButtons: true
         }).then((result) => {
             if (result.isConfirmed) {
-                fetch(`../../controlleur/controlleur.php?option=26&idBL=${idBL}&idP=${idP}&quantity=${quantity}&unite=${unite}`, {
+                fetch(`../../controlleur/controlleur.php?option=26&idBL=${idBL}&idP=${idP}&quantity=${quantity}`, {
                     method: 'GET',
                     dataType: 'json'
                 })
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        Swal.fire({
-                            icon: 'success',
-                            title: 'Suppression réussie',
-                            text: 'Le produit a été supprimé avec succès.',
-                        }).then(() => {
+                        Swal.fire({ icon: 'success', title: 'Suppression réussie', text: 'Produit supprimé.' }).then(() => {
                             const productItem = document.querySelector(`.product-item[data-idp="${idP}"]`);
                             productItem.parentElement.removeChild(productItem);
                             location.reload();
                         });
                     } else {
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'Erreur',
-                            text: "Erreur : " + data.message,
-                        });
+                        Swal.fire({ icon: 'error', title: 'Erreur', text: data.message });
                     }
                 })
                 .catch(error => {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Erreur de connexion',
-                        text: 'Une erreur est survenue lors de la requête.',
-                    });
-                    console.error('Erreur lors de la suppression du produit :', error);
+                    Swal.fire({ icon: 'error', title: 'Erreur de connexion', text: 'Une erreur est survenue.' });
                 });
             }
         });
     }
-    
 
     document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
         checkbox.checked = false;
