@@ -6,9 +6,9 @@ class DB
 
     public function __construct()
     {
-        $host='o86fy.myd.infomaniak.com';
-        $user = 'o86fy_khady';         
-        $password = 'Passer1234';         
+        $host='localhost';
+        $user = 'root';         
+        $password = '';         
         $dbname = 'o86fy_cmjlf';       
 
         try {
