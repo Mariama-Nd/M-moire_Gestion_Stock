@@ -19,6 +19,16 @@ document.addEventListener('DOMContentLoaded', function () {
                     `;
                     tbody.appendChild(tr);
                 });
+                $('#sales-table').DataTable({
+                    language: {
+                        url: '//cdn.datatables.net/plug-ins/1.13.4/i18n/fr-FR.json'
+                    },
+                    paging: true,
+                    pageLength: 5,
+                    lengthChange: false,
+                    ordering: true,
+                    autoWidth: false
+                });
             }
         })
         .catch(error => console.error('Erreur lors de la récupération des livraisons :', error));

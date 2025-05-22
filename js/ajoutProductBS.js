@@ -15,19 +15,20 @@ document.addEventListener('DOMContentLoaded', function () {
                     const productItem = document.createElement('div');
                     productItem.className = 'product-item';
                     productItem.dataset.idp = product.idP;
-                                      productItem.innerHTML = `
+                    const defaultUnite = (product.unite || "pièce").toLowerCase();
+                    productItem.innerHTML = `
                         <div class="card mb-3 shadow-sm">
                             <div class="card-body">
                                 <div class="row align-items-center">
                                     <div class="col-12 col-md-4 mb-3">
                                         <div class="d-flex align-items-center">
                                             <input type="checkbox" 
-                                                   id="prod-${product.idP}" 
-                                                   name="products[]" 
-                                                   value="${product.idP}"
-                                                   class="form-check-input me-2">
+                                                id="prod-${product.idP}" 
+                                                name="products[]" 
+                                                value="${product.idP}"
+                                                class="form-check-input me-2">
                                             <label for="prod-${product.idP}" 
-                                                   class="product-name form-check-label">
+                                                class="product-name form-check-label">
                                                 <b>${product.nomproduit}</b><br>
                                                 <small class="text-muted">(Demandé: ${product.quantite})</small>
                                                 <strong class="" style="color:red">(Stock: ${product.Stock_actuel})</strong>
@@ -40,39 +41,42 @@ document.addEventListener('DOMContentLoaded', function () {
                                         <div class="form-group">
                                             <label class="form-label"><b>Quantité</b></label>
                                             <input type="number" 
-                                                   name="quantity[]" 
-                                                   min="0" 
-                                                   id="${product.idP}" 
-                                                   class="form-control"
-                                                   disabled 
-                                                   placeholder="Quantité à sortir">
+                                                name="quantity[]" 
+                                                min="0" 
+                                                id="${product.idP}" 
+                                                class="form-control"
+                                                disabled 
+                                                placeholder="Quantité à sortir">
                                         </div>
                                     </div>
                     
                                     <div class="col-12 col-md-3 ">
                                         <div class="form-group">
                                             <label class="form-label"><b>Unité</b></label>
-                                            <input type="text" 
-                                                   name="unite[]" 
-                                                   class="form-control product-unite" 
-                                                   id="unite${product.idP}" 
-                                                   disabled 
-                                                   placeholder="(pièce,carton,boîte)">
+                                            <select name="unite[]" 
+                                                class="form-control product-unite" 
+                                                id="unite${product.idP}" 
+                                                disabled>
+                                                <option value="pièce" ${defaultUnite === 'pièce' ? 'selected' : ''}>pièce</option>
+                                                <option value="boîte" ${defaultUnite === 'boîte' ? 'selected' : ''}>boîte</option>
+                                                <option value="carton" ${defaultUnite === 'carton' ? 'selected' : ''}>carton</option>
+                                            </select>
+
                                         </div>
                                     </div>
                     
                                     <div class="col-12 col-md-2 ">
                                         <input type="hidden" name="idBS" value="${idBS}">
                                         <button type="button" 
-                                                class="btn btn-primary partielle-save " 
-                                                data-idp="${product.idP}">
+                                            class="btn btn-primary partielle-save" 
+                                            data-idp="${product.idP}">
                                             Enregistrer
                                         </button>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                    `;
+                    `;                    
                     productList.appendChild(productItem);
                 });
 
@@ -142,9 +146,9 @@ document.addEventListener('DOMContentLoaded', function () {
         if (!productItem) return;
 
         const quantityInput = productItem.querySelector('input[type="number"]');
-        const uniteInput = productItem.querySelector('input[type="text"]');
+        const uniteInput = productItem.querySelector('select[name="unite[]"]');
         const quantity = quantityInput.value.trim();
-        const unite = uniteInput.value.trim();
+        const unite = uniteInput.value;
         const quantiteDemandee = document.getElementById(`quantite_demande${idP}`).innerText;
 
         if (!validateProductInput(quantity, unite, quantiteDemandee)) return;
@@ -230,7 +234,7 @@ document.addEventListener('DOMContentLoaded', function () {
     function modifyProduct(idP) {
         const productItem = document.querySelector(`.product-item[data-idp="${idP}"]`);
         const quantityInput = productItem.querySelector('input[name="quantity[]"]');
-        const uniteInput = productItem.querySelector('input[name="unite[]"]');
+        const uniteInput = productItem.querySelector('[name="unite[]"]');
         const quantiteDemandee = document.getElementById(`quantite_demande${idP}`).innerText;
 
         // Réactiver les inputs pour modification
@@ -364,7 +368,7 @@ document.addEventListener('DOMContentLoaded', function () {
             
             // Sélectionner les éléments dans le contexte de la carte
             const quantityInput = productItem.querySelector('input[name="quantity[]"]');
-            const uniteInput = productItem.querySelector('input[name="unite[]"]');
+            const uniteInput = productItem.querySelector('select[name="unite[]"]');
             const productName = productItem.querySelector('.product-name').textContent;
             
             const quantity = quantityInput.value.trim();

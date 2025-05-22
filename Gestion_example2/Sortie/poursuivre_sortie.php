@@ -6,6 +6,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="../../css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
     <link href=" ../../ressources/dist_assets/plugins/custom/fullcalendar/fullcalendar.bundle.css" rel="stylesheet" type="text/css" />
     <link href=" ../../ressources/dist_assets/plugins/global/plugins.bundle.css" rel="stylesheet" type="text/css" />
     <link href=" ../../ressources/dist_assets/css/style.bundle.css" rel="stylesheet" type="text/css" />
@@ -121,6 +122,30 @@
 
         .product-list {
             margin-top: 30px;
+        }
+
+        .card-body {
+            background-color: #f9f9f9;
+            border-radius: 8px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 0;
+        }
+
+        .form-group .form-control,
+        .form-group .form-select {
+            height: 36px;
+            font-size: 14px;
+        }
+
+        .btn {
+            height: 36px;
+            font-size: 14px;
+            line-height: 1;
+            padding: 0 14px;
         }
 
         @media (max-width: 768px) {

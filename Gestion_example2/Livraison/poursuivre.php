@@ -131,6 +131,71 @@ $nomBL = $_GET["nomBL"];
             margin-top: 30px;
         }
 
+        .product-card-body {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            background: #f9f9f9;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            }
+
+            @media (min-width: 768px) {
+            .product-card-body {
+                flex-direction: row;
+                align-items: center;
+                justify-content: space-between;
+                flex-wrap: wrap;
+            }
+            }
+
+            .product-info {
+            flex: 1;
+            min-width: 180px;
+            }
+
+            .product-name {
+            font-weight: bold;
+            font-size: 1.1rem;
+            }
+
+            .product-meta {
+            font-size: 0.9rem;
+            color: #666;
+            }
+
+            .product-stock {
+            color: #e74c3c;
+            font-size: 0.9rem;
+            }
+
+            .product-fields {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            }
+
+            @media (min-width: 768px) {
+            .product-fields {
+                flex-direction: row;
+                gap: 1rem;
+            }
+            }
+
+            .product-fields .form-group {
+            display: flex;
+            flex-direction: column;
+            min-width: 120px;
+            }
+
+            .product-actions {
+            display: flex;
+            gap: 0.5rem;
+            justify-content: flex-end;
+            }
+
         @media (max-width: 768px) {
             form {
                 padding: 20px;

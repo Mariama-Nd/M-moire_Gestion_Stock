@@ -20,42 +20,42 @@ document.addEventListener('DOMContentLoaded', function () {
                         <span id="unite_product${product.idP}" hidden="true">${product.unite}</span>
                         <span id="prix_product${product.idP}" hidden="true">${product.prix_unitaire}</span>
                         <span id="reste${product.idP}" hidden="true">${product.reste}</span>
-                
-                        <div class="card-header">
-                            <h5 class="card-title">${product.nomproduit} <span class="text-muted">(Reste: ${product.reste})</span></h5>
-                        </div>
-                
-                        <div class="card-body">
-                        <div class="row">
-                         <div class="col-md-6">
-                                <label for="prod${product.idP}" class="form-label"><b>Quantité</b></label>
-                                <input type="number" name="quantity[]" min="0" id="quantity${product.idP}" class="form-control" value="${product.quantite}">
-                            </div>
-                
-                            <div class="col-md-6">
-                                <label for="prod${product.idP}" class="form-label"><b>Prix Unitaire (CFA)</b></label>
-                                <input type="number" name="prix[]" min="0" id="prix${product.idP}" class="form-control" value="${product.prix_unitaire}">
-                            </div>
-                        </div>
 
-                        <div class="mb-3">
-                            <label for="prod${product.idP}" class="form-label"><b>Unité (pièce, boîte, carton)</b></label>
-                            <select name="unite[]" id="unite${product.idP}" class="form-control">
+                        <div class="product-card-body">
+                            <div class="product-info">
+                            <div class="product-name">${product.nomproduit}</div>
+                            <div class="product-meta">Reste : ${product.reste}</div>
+                            <div class="product-stock">(Stock actuel : ${product.Stock_actuel})</div>
+                            </div>
+
+                            <div class="product-fields">
+                            <div class="form-group">
+                                <label>Quantité</label>
+                                <input type="number" name="quantity[]" id="quantity${product.idP}" class="form-control" />
+                            </div>
+                            <div class="form-group">
+                                <label>Unité</label>
+                                <select name="unite[]" id="unite${product.idP}" class="form-control">
                                 <option value="">-- unité --</option>
                                 <option value="pièce" ${product.unite === 'pièce' ? 'selected' : ''}>pièce</option>
-                                <option value="carton" ${product.unite === 'carton' ? 'selected' : ''}>carton</option>
                                 <option value="boîte" ${product.unite === 'boîte' ? 'selected' : ''}>boîte</option>
-                            </select>
-                        </div>
+                                <option value="carton" ${product.unite === 'carton' ? 'selected' : ''}>carton</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Prix (CFA)</label>
+                                <input type="number" name="prix[]" id="prix${product.idP}" class="form-control" value="${product.prix_unitaire}" />
+                            </div>
+                            </div>
 
-                        <div class="d-flex justify-content-between">
-                            <button type="button" class="btn ${product.reste > 0 ? 'btn-success' : 'btn-warning'} ${product.reste > 0 ? 'add' : 'modify'}">
-                                ${product.reste > 0 ? 'Enregistrer' : 'Modifier'}
+                            <div class="product-actions">
+                            <button type="button" class="btn btn-success btn-sm ${product.reste > 0 ? 'add' : 'modify'}">
+                                ${product.reste > 0 ? '➕ Enregistrer' : '✏️ Modifier'}
                             </button>
-                            <button type="button" class="btn btn-danger delete">Retirer</button>
+                            <button type="button" class="btn btn-danger btn-sm delete">Supprimer</button>
+                            </div>
                         </div>
-                    </div>
-                    `;
+                        `;
                     productList.appendChild(productItem);
                 });
                 addEventListeners();

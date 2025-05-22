@@ -7,41 +7,40 @@ document.addEventListener('DOMContentLoaded', function () {
         .then(data => {
             if (data.success) {
                 const productList = document.getElementById('productList');
+                console.log(data.products);
                 data.products.forEach(product => {
                     const productItem = document.createElement('div');
                     productItem.className = 'product-item card mb-3 shadow-sm';  
                     productItem.dataset.idp = product.idP;
                     productItem.innerHTML = `
-                        <span id="idPorduit${product.idP}" hidden="true">${product.idP}</span>
-                        <span id="idBSproduit${product.idP}" hidden="true">${idBS}</span>
-                        <span id="quantite_product${product.idP}" hidden="true">${product.quantite}</span>
-                        <span id="unite_product${product.idP}" hidden="true">${product.unite}</span>
-                       
-                        <span id="reste${product.idP}" hidden="true">${product.reste}</span>
-                
-                        <div class="card-header">
-                            <h5 class="card-title">${product.nomproduit} <span class="text-muted">(Reste: ${product.reste})</span></h5>
-                            <h5 class="card-title "> <span class="" style="color:red">( Stock actuel : ${product.Stock_actuel})</span></h5>
-                        </div>
-                
-                        <div class="card-body">
-                        <div class="row">
-                         <div class="col-md-12">
-                                <label for="prod${product.idP}" class="form-label"><b>Quantité</b></label>
-                                <input type="number" name="quantity[]" min="0" id="quantity${product.idP}" class="form-control" value="${product.quantite}">
+                        <div class="card-body d-flex align-items-center justify-content-between flex-wrap gap-3 p-3">
+                            <div class="flex-grow-1">
+                                <div class="fw-bold">${product.nomproduit}</div>
+                                <div class="text-muted">Reste: ${product.reste}</div>
+                                <div style="color:red;">Stock actuel : ${product.Stock_actuel}</div>
                             </div>
-                
-                          
-                </div>
-                           
-                            <div class="mb-3">
-                                <label for="prod${product.idP}" class="form-label"><b>Unité (pièce, boîte, carton)</b></label>
-                                <input type="text" name="unite[]" id="unite${product.idP}" class="form-control" value="${product.unite}">
+
+                            <div class="form-group">
+                                <label class="form-label mb-1"><b>Quantité</b></label>
+                                <input type="number" name="quantity[]" min="0" id="quantity${product.idP}" class="form-control" value="${product.quantite}" style="min-width: 100px;">
                             </div>
-                
-                            <div class="d-flex justify-content-between">
-                                <button type="button" class="btn btn-warning modify">Modifier</button>
-                                <button type="button" class="btn btn-danger delete">Supprimer</button>
+
+                            <div class="form-group">
+                                <label class="form-label mb-1"><b>Unité</b></label>
+                                <select name="unite[]" id="unite${product.idP}" class="form-select" style="min-width: 100px;">
+                                    <option value="pièce" ${product.unite === 'pièce' ? 'selected' : ''}>pièce</option>
+                                    <option value="boîte" ${product.unite === 'boîte' ? 'selected' : ''}>boîte</option>
+                                    <option value="carton" ${product.unite === 'carton' ? 'selected' : ''}>carton</option>
+                                </select>
+                            </div>
+
+                            <div class="d-flex gap-2 align-items-end">
+                                <button type="button" class="btn ${product.reste > 0 ? 'btn-success' : 'btn-primary'} action-btn px-3" 
+                                        data-idp="${product.idP}" data-reste="${product.reste}">
+                                    <i class="bi ${product.reste > 0 ? 'bi-plus-circle' : 'bi-pencil-square'} me-1"></i>
+                                    ${product.reste > 0 ? 'Enregistrer' : 'Modifier'}
+                                </button>
+                                <button type="button" class="btn btn-danger px-3 delete">Supprimer</button>
                             </div>
                         </div>
                     `;
@@ -72,11 +71,14 @@ document.addEventListener('DOMContentLoaded', function () {
                         <input type="checkbox" id="prod${product.idP}" name="products[]" value="${product.idP}">
 
                         <label for="prod${product.idP}" class="product-name"><b>${product.nomproduit} <br> (Reste:${product.reste})</b></label><br>
-                        <input type="number" name="quantity[]" min="0" disabled id="${product.idP}" placeholder="Quantite Recus">
+                        <input type="number" name="quantity[]" min="0" disabled id="${product.idP}" placeholder="Quantité reçue">
 
-                        
-                         <label for="prod${product.idP}"><b>unité(piece,caroton,boîte)</b></label>
-                        <input type="text" name="unite[]" class="product-unite" id="unite${product.idP}" >
+                        <label for="unite${product.idP}"><b>Unité (pièce, boîte, carton)</b></label>
+                        <select name="unite[]" class="product-unite form-select" id="unite${product.idP}" disabled>
+                            <option value="pièce" ${product.unite === 'pièce' ? 'selected' : ''}>pièce</option>
+                            <option value="boîte" ${product.unite === 'boîte' ? 'selected' : ''}>boîte</option>
+                            <option value="carton" ${product.unite === 'carton' ? 'selected' : ''}>carton</option>
+                        </select>
 
                         <button type="button" class="partielle-save" data-idp="${product.idP}">Enregistrer</button>
                     `;
@@ -97,7 +99,7 @@ document.addEventListener('DOMContentLoaded', function () {
             checkbox.addEventListener('change', function () {
                 const productItem = checkbox.closest('.product-item');
                 const quantityInput = productItem.querySelector('input[name="quantity[]"]');
-                const uniteInput = productItem.querySelector('input[name="unite[]"]');
+                const uniteInput = productItem.querySelector('[name="unite[]"]');
                 const isChecked = checkbox.checked;
                 quantityInput.disabled = !isChecked;
                 uniteInput.disabled = !isChecked;
@@ -118,13 +120,18 @@ document.addEventListener('DOMContentLoaded', function () {
             });
         });
 
-        document.querySelectorAll('.modify').forEach(button => {
+        document.querySelectorAll('.action-btn').forEach(button => {
             button.addEventListener('click', function () {
-                const productItem = button.closest('.product-item');
-                const idP = productItem.getAttribute('data-idp');
-                modifyProduct(idP);
+                const idP = button.getAttribute('data-idp');
+                const reste = parseFloat(button.getAttribute('data-reste'));
+        
+                if (reste > 0) {
+                    saveProduct(idP); // Mode Enregistrement
+                } else {
+                    modifyProduct(idP); // Mode Remplacement
+                }
             });
-        });
+        });        
 
         document.querySelectorAll('.delete').forEach(button => {
             button.addEventListener('click', function () {
@@ -228,7 +235,7 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     // Fonction pour enregistrer un produit partiellement
-       function saveProduct(idP) {
+    function saveProduct(idP) {
         const productItem = document.querySelector(`.product-item[data-idp="${idP}"]`);
         if (!productItem) {
             console.error("Produit non trouvé pour l'ID: " + idP);
@@ -236,20 +243,19 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     
         const quantityInput = productItem.querySelector('input[type="number"]');
-   
         const unite = document.getElementById("unite" + idP).value.trim();
-    
         const quantity = quantityInput.value.trim();
+        const reste = parseFloat(document.getElementById("reste" + idP).innerText);
+    
         if (quantityInput.disabled || !quantity || isNaN(quantity) || parseFloat(quantity) <= 0) {
             alert("Veuillez entrer une quantité valide.");
             return;
         }
     
-        if (prix.trim() <= 0) {
-            alert("Veuillez entrer un Prix valide.");
+        if (parseFloat(quantity) > reste) {
+            alert("Quantité invalide : dépasse le reste à sortir (" + reste + ").");
             return;
         }
-       
     
         const formData = new FormData();
         formData.append('option', 73);
@@ -259,16 +265,12 @@ document.addEventListener('DOMContentLoaded', function () {
         formData.append('quantity', parseFloat(quantity));
         formData.append('unite', unite);
     
-        console.log("Données envoyées : ", formData);
-    
         fetch(`../../controlleur/controlleur.php`, {
             method: 'POST',
             body: formData
         })
         .then(response => response.json())
         .then(data => {
-            console.log("Réponse du serveur : ", data); 
-        
             if (data.success) {
                 Swal.fire({
                     icon: 'success',
@@ -293,78 +295,81 @@ document.addEventListener('DOMContentLoaded', function () {
             });
             console.error("Erreur :", error);
         });
-        
-    }
+    }    
+
+    
     function modifyProduct(idP) {
         const productItem = document.querySelector(`.product-item[data-idp="${idP}"]`);
         const quantityInput = productItem.querySelector('input[type="number"]');
-        const currentQuantity = quantityInput.value;
-        const current_unite = document.getElementById("unite" + idP).value;
-        let reste = document.getElementById("reste" + idP).innerHTML;
+        const currentQuantity = quantityInput.value.trim();
+        const currentUnite = document.getElementById("unite" + idP).value.trim();
+        const totalDemandee = parseFloat(document.getElementById("quantite_product" + idP).innerText);
     
-        if (currentQuantity === null || current_unite == null) {
-           
+        if (!currentQuantity || !currentUnite) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Champs vides',
+                text: "Veuillez remplir tous les champs.",
+            });
             return;
-        } else if (currentQuantity.trim() === "" ||  current_unite.trim() == '') {
-          
-            Swal.fire({
-                icon: 'warning',
-                title: 'Entrée vide',
-                text: "L'entrée est vide. Veuillez entrer une valeur.",
-            });
-        } else if (isNaN(currentQuantity) || parseFloat(currentQuantity) < 0 ) {
-            Swal.fire({
-                icon: 'warning',
-                title: 'Valeur invalide',
-                text: "Veuillez entrer un nombre valide supérieur à 0.",
-            });
-        } else if ((quantityInput-currentQuantity) > reste) {
+        }
+    
+        if (isNaN(currentQuantity) || parseFloat(currentQuantity) <= 0) {
             Swal.fire({
                 icon: 'warning',
                 title: 'Quantité invalide',
-                text: "Impossible de poursuivre cette action ! L'intégralité du produit a été sortie.",
+                text: "Veuillez entrer une quantité valide supérieure à 0.",
             });
-        } else {
-            const formData = new FormData();
-            formData.append('option', 79);
-            formData.append('idBS', idBS);
-            formData.append('idP', idP);
-            formData.append('quantity', currentQuantity);
-            formData.append('unite', current_unite);
+            return;
+        }
     
-            fetch('../../controlleur/controlleur.php', {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Succès',
-                        text: 'Modification réussie.',
-                    }).then(() => {
-                        quantityInput.value = currentQuantity;
-                        location.reload();
-                    });
-                } else {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Erreur',
-                        text: "Erreur : " + data.message,
-                    });
-                }
-            })
-            .catch(error => {
+        if (parseFloat(currentQuantity) > totalDemandee) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Quantité invalide',
+                text: "La quantité saisie dépasse la quantité totale demandée (" + totalDemandee + ").",
+            });
+            return;
+        }
+    
+        const formData = new FormData();
+        formData.append('option', 79);
+        formData.append('idBS', idBS);
+        formData.append('idP', idP);
+        formData.append('quantity', currentQuantity);
+        formData.append('unite', currentUnite);
+    
+        fetch('../../controlleur/controlleur.php', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Succès',
+                    text: 'Modification réussie.',
+                }).then(() => {
+                    location.reload();
+                });
+            } else {
                 Swal.fire({
                     icon: 'error',
                     title: 'Erreur',
-                    text: 'Erreur de connexion avec le serveur.',
+                    text: "Erreur : " + data.message,
                 });
-                console.error("Erreur :", error);
+            }
+        })
+        .catch(error => {
+            Swal.fire({
+                icon: 'error',
+                title: 'Erreur',
+                text: 'Erreur de connexion avec le serveur.',
             });
-        }
-    }
+            console.error("Erreur :", error);
+        });
+    }    
     
    
     document.getElementById('bonForm').addEventListener('submit', function (event) {
