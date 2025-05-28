@@ -23,6 +23,28 @@
     body{
         flex-direction: column;
     }
+    #sales-table td, #sales-table th {
+    vertical-align: middle;
+    }
+
+    .btn-custom {
+        padding: 5px 10px;
+        font-size: 0.875rem;
+        border-radius: 0.3rem;
+    }
+
+    #searchInput, #filterStatus {
+        max-width: 300px;
+    }
+
+    .card-title {
+        font-size: 1rem;
+    }
+
+    .page-link {
+        cursor: pointer;
+    }
+
 </style>
 <body id="kt_body" class="header-fixed header-tablet-and-mobile-fixed toolbar-enabled toolbar-fixed aside-enabled aside-fixed" style="--kt-toolbar-height:55px;--kt-toolbar-height-tablet-and-mobile:55px ">
     <div class="d-flex flex-column flex-root">
@@ -475,30 +497,47 @@
                         </div>
                     </div>
                 </div>
-    <div class="container">
-        <div class="button-container">
+                <div class="container my-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="text-primary">Liste des Bons de Sortie</h2>
+        <button onclick="creerBS()" class="btn btn-success">+ Créer un BS</button>
+    </div>
 
-            <button onclick="creerBS()" >Créer  BS</button>
-        </div>
-        <table id="sales-table" class="table align-middle table-row-dashed fs-6 gy-5"  style="background-color: white;">
-            <thead>
+    <div class="d-flex justify-content-between flex-wrap mb-3">
+        <input type="text" id="searchInput" class="form-control w-50 mb-2" placeholder="Rechercher par nom ou service...">
+        <select id="filterStatus" class="form-select w-25 mb-2">
+            <option value="">Tous les états</option>
+            <option value="En attente">En attente</option>
+            <option value="Validé">Validé</option>
+            <option value="En cours">En cours</option>
+        </select>
+    </div>
+
+    <div class="table-responsive shadow-sm rounded">
+        <table id="sales-table" class="table table-hover align-middle mb-0 bg-white">
+            <thead class="bg-light">
                 <tr>
-                    <th>Prenom Agent</th>
-                    <th>Nom Agent</th>
-                    <th>Nom Service</th>
-                    <th>Date Creation</th>
-                    <th>Etat du Bon de Sortie</th>
-                    <th>Action</th>
-                    <th></th>
-                    <th></th>
+                    <th>Prenom</th>
+                    <th>Nom</th>
+                    <th>Service</th>
+                    <th>Date</th>
+                    <th>État</th>
+                    <th>Actions</th>
                 </tr>
             </thead>
-            <tbody class="text-gray-600 fw-bold">
-                
+            <tbody class="text-dark fw-normal">
+                <!-- Données injectées par JS -->
             </tbody>
         </table>
-       
     </div>
+
+    <nav class="mt-4">
+        <ul class="pagination justify-content-center" id="pagination">
+            <!-- Pagination injectée dynamiquement -->
+        </ul>
+    </nav>
+</div>
+
     <div class="footer py-4 d-flex flex-lg-column" id="kt_footer">
                     <div class="container-fluid d-flex flex-column flex-md-row align-items-center justify-content-between">
                         <div class="text-dark order-2 order-md-1">

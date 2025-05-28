@@ -2153,6 +2153,36 @@ case 44:
                                         case 68: 
                                             try {
                                                 $connexion = $gc->getDb();
+                                        
+                                                // Récupération des paramètres
+                                                $search = $_POST['search'] ?? '';
+                                                $etat = $_POST['etat'] ?? '';
+                                                $date = $_POST['date'] ?? '';
+                                                $page = intval($_POST['page'] ?? 1);
+                                                $limit = intval($_POST['limit'] ?? 10);
+                                                $offset = ($page - 1) * $limit;
+                                        
+                                                $where = ["bs.Etat_bon_sortie <> 4"];
+                                                $params = [];
+                                        
+                                                if (!empty($search)) {
+                                                    $where[] = "(eb.nom LIKE :search OR eb.prenom LIKE :search OR eb.structure LIKE :search)";
+                                                    $params[':search'] = "%" . $search . "%";
+                                                }
+                                        
+                                                if (!empty($etat)) {
+                                                    $where[] = "bs.Etat_bon_sortie = :etat";
+                                                    $params[':etat'] = $etat;
+                                                }
+                                        
+                                                if (!empty($date)) {
+                                                    $where[] = "DATE(bs.date_creation) = :date";
+                                                    $params[':date'] = $date;
+                                                }
+                                        
+                                                $whereSQL = count($where) > 0 ? 'WHERE ' . implode(' AND ', $where) : '';
+                                        
+                                                // Requête principale avec pagination
                                                 $sql = "SELECT DISTINCT bs.*, 
                                                                 sc.nom_status_cmd, 
                                                                 eb.structure, 
@@ -2160,41 +2190,59 @@ case 44:
                                                                 eb.prenom
                                                         FROM bon_sortie bs
                                                         JOIN status_commande sc ON sc.id_status_cmd = bs.Etat_bon_sortie
-                                                        JOIN expression_besoin eb ON eb.idEB = bs.expID 
-                                                        WHERE bs.Etat_bon_sortie <> 4
-                                                        ORDER BY bs.date_creation DESC";
-                                                
+                                                        JOIN expression_besoin eb ON eb.idEB = bs.expID
+                                                        $whereSQL
+                                                        ORDER BY bs.date_creation DESC
+                                                        LIMIT :limit OFFSET :offset";
+                                        
                                                 $stmt = $connexion->prepare($sql);
+                                                foreach ($params as $key => $val) {
+                                                    $stmt->bindValue($key, $val);
+                                                }
+                                                $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+                                                $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
                                                 $stmt->execute();
                                                 $bonsSortie = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                         
-                                                // Ajouter le nombre de produits pour chaque bon de sortie
+                                                // Compter les produits associés à chaque bon
                                                 foreach ($bonsSortie as &$sortie) {
                                                     $idBS = $sortie["idBS"];
-                                                    $r = "SELECT COUNT(*) as nbr_produits 
-                                                            FROM bon_sortie_produit 
-                                                            WHERE idBS = :idBS";
+                                                    $r = "SELECT COUNT(*) as nbr_produits FROM bon_sortie_produit WHERE idBS = :idBS";
                                                     $requette = $connexion->prepare($r);
                                                     $requette->bindParam(':idBS', $idBS, PDO::PARAM_INT);
                                                     $requette->execute();
                                                     $result = $requette->fetch(PDO::FETCH_ASSOC);
-                                                    $sortie["nbr_produits"] = $result["nbr_produits"];
-                                        
-                                                    
-                                                    
+                                                    $sortie["nbr_produits"] = $result["nbr_produits"] ?? 0;
                                                 }
+                                        
+                                                // Requête pour le total filtré (sans pagination)
+                                                $countSQL = "SELECT COUNT(*) as total
+                                                            FROM bon_sortie bs
+                                                            JOIN status_commande sc ON sc.id_status_cmd = bs.Etat_bon_sortie
+                                                            JOIN expression_besoin eb ON eb.idEB = bs.expID
+                                                            $whereSQL";
+                                        
+                                                $countStmt = $connexion->prepare($countSQL);
+                                                foreach ($params as $key => $val) {
+                                                    $countStmt->bindValue($key, $val);
+                                                }
+                                                $countStmt->execute();
+                                                $totalCount = $countStmt->fetch(PDO::FETCH_ASSOC)['total'] ?? 0;
                                         
                                                 echo json_encode([
                                                     "success" => true,
-                                                    "data" => $bonsSortie
+                                                    "data" => $bonsSortie,
+                                                    "total" => intval($totalCount)
                                                 ]);
+                                        
                                             } catch (PDOException $e) {
                                                 echo json_encode([
                                                     "success" => false, 
                                                     "message" => "Erreur : " . $e->getMessage()
                                                 ]);
                                             }
-                                            break;
+                                            break;                                       
+                                        
                                             
                                             case 69:
                                                 try {

@@ -1,177 +1,164 @@
+// script.js mis à jour pour filtre + recherche + pagination depuis le serveur
 
-document.addEventListener('DOMContentLoaded', function() {
+let currentPage = 1;
+const rowsPerPage = 5;
+
+// Écouteur d'événement
+
+document.addEventListener('DOMContentLoaded', () => {
+    setupFilters();
     fetchBonSortie();
 });
 
-function fetchBonSortie() {
-    fetch('../../controlleur/controlleur.php', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded'
-        },
-        body: new URLSearchParams({
-            'option': 68
-        })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            const bonsSortie = data.data;
-            const tbody = document.querySelector('#sales-table tbody');
-            tbody.innerHTML = ''; 
+function setupFilters() {
+    document.getElementById('searchInput').addEventListener('input', () => {
+        currentPage = 1;
+        fetchBonSortie();
+    });
 
-            data.data.forEach(bon => {
-                const tr = document.createElement('tr');
-                const actions = getActions(bon);
-                tr.innerHTML = `
-                    <td>${bon.prenom}</td>
-                    <td>${bon.nom}</td>
-                    <td>${bon.structure}</td>
-                    <td>${bon.date_creation}</td>
-                    <td>${bon.nom_status_cmd}</td>
-                    <td>${actions}</td>
-                `;
-                tbody.appendChild(tr);
-            });
-        } else {
-            console.error('Erreur : ' + data.message);
-        }
-    })
-    .catch(error => {
-        console.error('Erreur de connexion au serveur :', error);
+    document.getElementById('filterStatus').addEventListener('change', () => {
+        currentPage = 1;
+        fetchBonSortie();
     });
 }
 
+function fetchBonSortie() {
+    const search = document.getElementById('searchInput').value.trim();
+    const etat = document.getElementById('filterStatus').value;
+
+    const formData = new URLSearchParams({
+        option: 68,
+        page: currentPage,
+        limit: rowsPerPage,
+        search,
+        etat
+    });
+
+    fetch('../../controlleur/controlleur.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: formData
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            renderTable(data.data);
+            setupPagination(data.total || 0);
+        } else {
+            console.error('Erreur serveur :', data.message);
+        }
+    })
+    .catch(err => console.error('Erreur fetch :', err));
+}
+
+function renderTable(data) {
+    const tbody = document.querySelector('#sales-table tbody');
+    tbody.innerHTML = '';
+
+    data.forEach(bon => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td>${bon.prenom}</td>
+            <td>${bon.nom}</td>
+            <td>${bon.structure}</td>
+            <td>${bon.date_creation}</td>
+            <td>${bon.nom_status_cmd}</td>
+            <td>${getActions(bon)}</td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
+
+function setupPagination(totalItems) {
+    const pageCount = Math.ceil(totalItems / rowsPerPage);
+    const pagination = document.getElementById('pagination');
+    pagination.innerHTML = '';
+
+    for (let i = 1; i <= pageCount; i++) {
+        const li = document.createElement('li');
+        li.className = `page-item ${i === currentPage ? 'active' : ''}`;
+        li.innerHTML = `<a class="page-link" href="#">${i}</a>`;
+        li.addEventListener('click', (e) => {
+            e.preventDefault();
+            currentPage = i;
+            fetchBonSortie();
+        });
+        pagination.appendChild(li);
+    }
+}
 
 function getActions(bon) {
     const { idBS, expID, Etat_bon_sortie, nbr_produits } = bon;
-    let actions = '<div class="d-flex gap-2">';
+    let html = `<div class="btn-group" role="group">`;
 
-    // État initial (1) ou pas de produits
     if (Etat_bon_sortie == 1 || nbr_produits <= 0) {
-        actions += `
-            <button onclick="location.href='add_product_to_bs.php?idBon=${idBS}&expID=${expID}'" 
-                    class="btn btn-primary btn-custom">Editer</button>`;
+        html += `<button onclick="location.href='add_product_to_bs.php?idBon=${idBS}&expID=${expID}'" class="btn btn-primary btn-sm">Editer</button>`;
+    } else if (Etat_bon_sortie == 2) {
+        html += `
+            <button onclick="location.href='Consulter_BS.php?idBon=${idBS}'" class="btn btn-secondary btn-sm">Consulter</button>
+            <button onclick="newWindows(${idBS})" class="btn btn-info btn-sm">Voir</button>`;
+    } else if (Etat_bon_sortie == 5) {
+        html += `
+            <button onclick="validation_Sortie(${idBS})" class="btn btn-success btn-sm">Valider</button>
+            <button onclick="location.href='poursuivre_sortie.php?idBon=${idBS}&expID=${expID}'" class="btn btn-warning btn-sm">Poursuivre</button>`;
     } else {
-        if (Etat_bon_sortie == 2) {
-            // État validé
-            actions += `
-                <button onclick="location.href='Consulter_BS.php?idBon=${idBS}'" 
-                        class="btn btn-secondary btn-custom">Consulter</button>
-                <button onclick="newWindows(${idBS})" 
-                        class="btn btn-light btn-custom"
-                        style="background-color:rgb(97, 196, 229); color: white;">
-                        Voir Bon</button>`;
-        } else if (Etat_bon_sortie == 5) {
-            // État sauvegardé
-            actions += `
-                <button onclick="validation_Sortie(${idBS})" 
-                        class="btn btn-success btn-custom">Valider</button>
-                <button onclick="location.href='poursuivre_sortie.php?idBon=${idBS}&expID=${expID}'" 
-                        class="btn btn-warning btn-custom">Poursuivre</button>`;
-        } else if (Etat_bon_sortie != 3 && Etat_bon_sortie != 4) {
-            actions += `
-                <button onclick="validation_Sortie(${idBS})" 
-                        class="btn btn-success btn-custom">Valider</button>`;
-        }
+        html += `<button onclick="validation_Sortie(${idBS})" class="btn btn-success btn-sm">Valider</button>`;
     }
 
-  
-    actions += `
-        <button onclick="deleteBonSortie(${idBS})" 
-                class="btn btn-danger btn-custom">Supprimer</button>`;
-
-    actions += '</div>';
-    return actions;
+    html += `<button onclick="deleteBonSortie(${idBS})" class="btn btn-danger btn-sm">Supprimer</button>`;
+    html += `</div>`;
+    return html;
 }
 
 function creerBS() {
     location.href = "index.php";
 }
 
-
-
-
-
-function deleteBonSortie(idBon) {
-    Swal.fire({
-        title: 'Êtes-vous sûr ?',
-        text: "Voulez-vous vraiment supprimer ce bon de sortie ?",
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#3085d6',
-        cancelButtonColor: '#d33',
-        confirmButtonText: 'Oui, supprimer!',
-        cancelButtonText: 'Annuler'
-    }).then((result) => {
-        if (result.isConfirmed) {
-            fetch('../../controlleur/controlleur.php', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded'
-                },
-                body: new URLSearchParams({
-                    'option': 70,
-                    'idBon': idBon
-                })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    Swal.fire({
-                        title: 'Supprimé!',
-                        text: 'Le bon de sortie a été supprimé avec succès.',
-                        icon: 'success',
-                        timer: 1500
-                    }).then(() => {
-                        window.location.href = "Liste_bon_sortie.php";
-                    });
-                } else {
-                    Swal.fire({
-                        title: 'Erreur!',
-                        text: data.message || 'Une erreur est survenue lors de la suppression.',
-                        icon: 'error'
-                    });
-                }
-            })
-            .catch(error => {
-                console.error('Erreur de connexion au serveur :', error);
-                Swal.fire({
-                    title: 'Erreur!',
-                    text: 'Erreur de connexion au serveur.',
-                    icon: 'error'
-                });
-            });
-        }
-    });
-}
 function newWindows(idBS) {
-    window.open("FPDF.php?id=" + idBS, "blank");
+    window.open("FPDF.php?id=" + idBS, "_blank");
 }
 
 function validation_Sortie(idBon) {
     fetch('../../controlleur/controlleur.php', {
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded'
-        },
-        body: new URLSearchParams({
-            'option': 69,
-            'idBon': idBon
-        })
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({ 'option': 69, 'idBon': idBon })
     })
-    .then(response => response.json())
+    .then(res => res.json())
     .then(data => {
         if (data.success) {
-            alert("Validation réussie");
+            Swal.fire('Succès', 'Validation effectuée', 'success')
+                .then(() => fetchBonSortie());
         } else {
-            alert(data.message);
+            Swal.fire('Erreur', data.message, 'error');
         }
-        window.location.href = "Liste_bon_sortie.php";
-    })
-    .catch(error => {
-        console.error('Erreur de connexion au serveur :', error);
-        alert('Erreur de connexion au serveur');
-        window.location.href = "Liste_bon_sortie.php";
-    }); 
+    });
+}
+
+function deleteBonSortie(idBon) {
+    Swal.fire({
+        title: 'Supprimer ?',
+        text: 'Cette action est irréversible.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Oui, supprimer!',
+        cancelButtonText: 'Annuler'
+    }).then(result => {
+        if (result.isConfirmed) {
+            fetch('../../controlleur/controlleur.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: new URLSearchParams({ 'option': 70, 'idBon': idBon })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    Swal.fire('Supprimé!', 'Le bon a été supprimé.', 'success')
+                        .then(() => fetchBonSortie());
+                } else {
+                    Swal.fire('Erreur!', data.message, 'error');
+                }
+            });
+        }
+    });
 }
