@@ -756,84 +756,66 @@ echo json_encode($result);
                                     break;
                                 
                                     case 23:
-                                        // error_log("Données reçues : " . json_encode($_POST));
-                                        if (!isset($_POST['idBL'], $_POST['idP'], $_POST['quantity'], $_POST['idBC'], $_POST['prix']  ,$_POST['unite'])) {
+                                        if (!isset($_POST['idBL'], $_POST['idP'], $_POST['quantity'], $_POST['idBC'], $_POST['unite'])) {
                                             echo json_encode(['success' => false, 'message' => 'Les données nécessaires ne sont pas fournies.']);
                                             exit;
                                         }
-                                
+                                    
                                         date_default_timezone_set('Africa/Dakar');
                                         $dateT = new DateTime();
                                         $date = $dateT->format("Y-m-d H:i:s");
                                         $idBL = $_POST['idBL'];
                                         $idBC = $_POST['idBC'];
                                         $idP = $_POST['idP'];
-                                        $prix = $_POST['prix'];
                                         $unite = $_POST['unite'];
                                         $quantity = $_POST['quantity'];
-                                
-                                        // Validation de la quantité
+                                    
                                         if (!is_numeric($quantity) || $quantity <= 0) {
                                             echo json_encode(['success' => false, 'message' => 'Quantité invalide.']);
                                             exit;
                                         }
-                                            // Connexion à la base de données
+                                    
                                         try {
-                                            // Récupérer la quantité totale livrée pour un produit
                                             $r = "SELECT SUM(quantite) as somme1 FROM bon_livraison_produit WHERE idP = :idP AND idBL = :idBL";
                                             $requette = $gc->getDb()->prepare($r);
                                             $requette->execute([':idP' => $idP, ':idBL' => $idBL]);
                                             $resultat = $requette->fetch(PDO::FETCH_ASSOC);
                                             $qte_bl = $resultat['somme1'] ?? 0;
-
-                                            // Récupérer la quantité du produit dans le bon de commande
+                                    
                                             $q = "SELECT quantite FROM bon_commande_produit WHERE idP = :idP AND idBC = :idBC";
                                             $rqt = $gc->getDb()->prepare($q);
                                             $rqt->execute([':idP' => $idP, ':idBC' => $idBC]);
                                             $rep = $rqt->fetch(PDO::FETCH_ASSOC);
                                             $qte_bc = $rep['quantite'] ?? 0;
-
+                                    
                                             $reste = $qte_bc - $qte_bl;
                                             if ($quantity > $reste) {
                                                 echo json_encode(['success' => false, 'message' => 'La quantité saisie dépasse la quantité restante à livrer ('.$reste.')']);
                                                 exit;
                                             }
-
-                                            // Vérification de l'existence de l'enregistrement
+                                    
                                             $q = "SELECT * FROM bon_livraison_produit WHERE idP = :idP AND idBL = :idBL";
                                             $rqt = $gc->getDb()->prepare($q);
                                             $rqt->execute([':idP' => $idP, ':idBL' => $idBL]);
                                             $rep = $rqt->fetchAll(PDO::FETCH_ASSOC);
-                                            // Insertion ou mise à jour de l'enregistrement
+                                    
                                             if (count($rep) <= 0) {
-                                                $stmt = $gc->getDb()->prepare("INSERT INTO bon_livraison_produit (idBL, idP, quantite,unite, prix_unitaire, dateadd) VALUES (:idBL, :idP, :quantity, :unite, :prix, :dateadd)");
-                                                $stmt->bindParam(':idBL', $idBL);
-                                                $stmt->bindParam(':idP', $idP);
-                                                $stmt->bindParam(':prix', $prix);
-                                                $stmt->bindParam(':unite', $unite);
-                                                $stmt->bindParam(':quantity', $quantity);
-                                                $stmt->bindParam(':dateadd', $date);
-                                                $stmt->execute();
+                                                $stmt = $gc->getDb()->prepare("INSERT INTO bon_livraison_produit (idBL, idP, quantite, unite, dateadd) VALUES (:idBL, :idP, :quantity, :unite, :dateadd)");
+                                                $stmt->execute([':idBL' => $idBL, ':idP' => $idP, ':quantity' => $quantity, ':unite' => $unite, ':dateadd' => $date]);
                                             } else {
-                                                $stmt = $gc->getDb()->prepare("UPDATE bon_livraison_produit SET quantite = quantite + :quantity, prix_unitaire = :prix ,unite= :unite WHERE idP = :idP AND idBL = :idBL");
-                                                $stmt->bindParam(':quantity', $quantity);
-                                                $stmt->bindParam(':prix', $prix);
-                                                $stmt->bindParam(':unite', $unite);
-                                                $stmt->bindParam(':idP', $idP);
-                                                $stmt->bindParam(':idBL', $idBL);
-                                                $stmt->execute();
+                                                $stmt = $gc->getDb()->prepare("UPDATE bon_livraison_produit SET quantite = quantite + :quantity, unite = :unite WHERE idP = :idP AND idBL = :idBL");
+                                                $stmt->execute([':quantity' => $quantity, ':unite' => $unite, ':idP' => $idP, ':idBL' => $idBL]);
                                             }
-                                            $stmt =$gc->getDb()->prepare("UPDATE bon_livraison SET Etat_Livraison = 5 WHERE idBL = :idBL");
-                                            $stmt->bindParam(':idBL', $idBL);
-                                            $stmt->execute();
-
+                                    
+                                            $stmt = $gc->getDb()->prepare("UPDATE bon_livraison SET Etat_Livraison = 5 WHERE idBL = :idBL");
+                                            $stmt->execute([':idBL' => $idBL]);
+                                    
                                             echo json_encode(['success' => true, 'message' => 'Produit enregistré avec succès.']);
-
-                                            } catch (PDOException $e) {
+                                    
+                                        } catch (PDOException $e) {
                                             echo json_encode(['success' => false, 'message' => 'Erreur serveur : ' . $e->getMessage()]);
-                                            }
-                                            break;
-                                                                     
+                                        }
+                                        break;                                                                                                        
                                                                                 
                                         case 24: 
                                             if (isset($_GET["idBC"]) && isset($_GET["idBL"])) {
@@ -863,98 +845,79 @@ echo json_encode($result);
                                                 break;
 
 
-        case 25: 
-            if (!isset($_POST['idBL'], $_POST['idBC'], $_POST['idP'], $_POST['quantity'], $_POST['prix'], $_POST['unite'])) {
-                echo json_encode(['success' => false, 'message' => 'Les données nécessaires ne sont pas fournies.']);
-                exit;
-            }
-        
-            $idBL = $_POST['idBL'];
-            $idBC = $_POST['idBC'];
-            $idP = $_POST['idP'];
-            $quantityInput = floatval($_POST['quantity']);
-            $prix = $_POST['prix'];
-            $unite = $_POST['unite'];
-            $mode = $_POST['mode'] ?? 'cumulatif'; // 'remplacement' ou défaut 'cumulatif'
-        
-            try {
-                // Récupérer date et quantité déjà livrée
-                $sql_date = "SELECT dateadd, quantite FROM bon_livraison_produit WHERE idP = :idP AND idBL = :idBL";
-                $stmt = $gc->getDb()->prepare($sql_date);
-                $stmt->execute([':idP' => $idP, ':idBL' => $idBL]);
-                $row = $stmt->fetch(PDO::FETCH_ASSOC);
-        
-                if (!$row) {
-                    echo json_encode(['success' => false, 'message' => 'Produit non trouvé dans le bon de livraison.']);
-                    exit;
-                }
-        
-                $date = $row['dateadd'];
-                $quantite_deja_livree = floatval($row['quantite']);
-        
-                // Récupérer la quantité commandée
-                $sql_bc = "SELECT quantite FROM bon_commande_produit WHERE idP = :idP AND idbc = :idBC";
-                $stmt = $gc->getDb()->prepare($sql_bc);
-                $stmt->execute([':idP' => $idP, ':idBC' => $idBC]);
-                $row_bc = $stmt->fetch(PDO::FETCH_ASSOC);
-        
-                if (!$row_bc) {
-                    echo json_encode(['success' => false, 'message' => 'Produit non trouvé dans le bon de commande.']);
-                    exit;
-                }
-        
-                $quantite_commandee = floatval($row_bc['quantite']);
-        
-                // Appliquer la bonne logique
-                if ($mode === 'remplacement') {
-                    // Remplacement total
-                    if ($quantityInput > $quantite_commandee) {
-                        echo json_encode([
-                            'success' => false,
-                            'message' => "Quantité invalide. Elle dépasse la quantité commandée ($quantite_commandee)."
-                        ]);
-                        exit;
-                    }
-        
-                    $quantite_a_enregistrer = $quantityInput;
-        
-                } else {
-                    // Ajout cumulatif
-                    $quantite_totale = $quantite_deja_livree + $quantityInput;
-        
-                    if ($quantite_totale > $quantite_commandee) {
-                        $reste = $quantite_commandee - $quantite_deja_livree;
-                        echo json_encode([
-                            'success' => false,
-                            'message' => "Quantité invalide. Vous ne pouvez ajouter que $reste unité(s) au maximum."
-                        ]);
-                        exit;
-                    }
-        
-                    $quantite_a_enregistrer = $quantite_totale;
-                }
-        
-                // Mise à jour
-                $sql_update = "UPDATE bon_livraison_produit 
-                               SET quantite = :quantite, unite = :unite, prix_unitaire = :prix 
-                               WHERE idBL = :idBL AND idP = :idP AND dateadd = :dateadd";
-                $stmt = $gc->getDb()->prepare($sql_update);
-                $stmt->execute([
-                    ':quantite' => $quantite_a_enregistrer,
-                    ':unite' => $unite,
-                    ':prix' => $prix,
-                    ':idBL' => $idBL,
-                    ':idP' => $idP,
-                    ':dateadd' => $date
-                ]);
-        
-                echo json_encode(['success' => true]);
-        
-            } catch (PDOException $e) {
-                echo json_encode(['success' => false, 'message' => 'Erreur PDO : ' . $e->getMessage()]);
-            }
-            break;                  
-        
+                                                case 25: 
+                                                    if (!isset($_POST['idBL'], $_POST['idBC'], $_POST['idP'], $_POST['quantity'], $_POST['unite'])) {
+                                                        echo json_encode(['success' => false, 'message' => 'Les données nécessaires ne sont pas fournies.']);
+                                                        exit;
+                                                    }
+                                                
+                                                    $idBL = $_POST['idBL'];
+                                                    $idBC = $_POST['idBC'];
+                                                    $idP = $_POST['idP'];
+                                                    $quantityInput = floatval($_POST['quantity']);
+                                                    $unite = $_POST['unite'];
+                                                    $mode = $_POST['mode'] ?? 'cumulatif';
+                                                
+                                                    try {
+                                                        $sql_date = "SELECT dateadd, quantite FROM bon_livraison_produit WHERE idP = :idP AND idBL = :idBL";
+                                                        $stmt = $gc->getDb()->prepare($sql_date);
+                                                        $stmt->execute([':idP' => $idP, ':idBL' => $idBL]);
+                                                        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+                                                
+                                                        if (!$row) {
+                                                            echo json_encode(['success' => false, 'message' => 'Produit non trouvé dans le bon de livraison.']);
+                                                            exit;
+                                                        }
+                                                
+                                                        $date = $row['dateadd'];
+                                                        $quantite_deja_livree = floatval($row['quantite']);
+                                                
+                                                        $sql_bc = "SELECT quantite FROM bon_commande_produit WHERE idP = :idP AND idbc = :idBC";
+                                                        $stmt = $gc->getDb()->prepare($sql_bc);
+                                                        $stmt->execute([':idP' => $idP, ':idBC' => $idBC]);
+                                                        $row_bc = $stmt->fetch(PDO::FETCH_ASSOC);
+                                                
+                                                        if (!$row_bc) {
+                                                            echo json_encode(['success' => false, 'message' => 'Produit non trouvé dans le bon de commande.']);
+                                                            exit;
+                                                        }
+                                                
+                                                        $quantite_commandee = floatval($row_bc['quantite']);
+                                                
+                                                        if ($mode === 'remplacement') {
+                                                            if ($quantityInput > $quantite_commandee) {
+                                                                echo json_encode(['success' => false, 'message' => "Quantité invalide. Elle dépasse la quantité commandée ($quantite_commandee)."]);
+                                                                exit;
+                                                            }
+                                                            $quantite_a_enregistrer = $quantityInput;
+                                                        } else {
+                                                            $quantite_totale = $quantite_deja_livree + $quantityInput;
+                                                            if ($quantite_totale > $quantite_commandee) {
+                                                                $reste = $quantite_commandee - $quantite_deja_livree;
+                                                                echo json_encode(['success' => false, 'message' => "Quantité invalide. Vous ne pouvez ajouter que $reste unité(s) au maximum."]);
+                                                                exit;
+                                                            }
+                                                            $quantite_a_enregistrer = $quantite_totale;
+                                                        }
+                                                
+                                                        $sql_update = "UPDATE bon_livraison_produit 
+                                                                       SET quantite = :quantite, unite = :unite 
+                                                                       WHERE idBL = :idBL AND idP = :idP AND dateadd = :dateadd";
+                                                        $stmt = $gc->getDb()->prepare($sql_update);
+                                                        $stmt->execute([
+                                                            ':quantite' => $quantite_a_enregistrer,
+                                                            ':unite' => $unite,
+                                                            ':idBL' => $idBL,
+                                                            ':idP' => $idP,
+                                                            ':dateadd' => $date
+                                                        ]);
+                                                
+                                                        echo json_encode(['success' => true]);
+                                                
+                                                    } catch (PDOException $e) {
+                                                        echo json_encode(['success' => false, 'message' => 'Erreur PDO : ' . $e->getMessage()]);
+                                                    }
+                                                    break;                                                                  
         
             case 26: // Gérer le retrait d’un produit du bon de livraison (sans toucher au stock produit)
                 $idBL = $_GET['idBL'];
@@ -989,100 +952,77 @@ echo json_encode($result);
                
 
 
-            case 27: 
-                try {
-                  
-                    $input = json_decode(file_get_contents('php://input'), true);
-
-                    if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($input['enregistrerTout'])) {
-                        $idP = $input['products'];
-                        $Prix = $input['prix'];
-                        $quantite = $input['quantity'];
-                        $idBL = $input['idBL'] ?? $_SESSION["idBL"];
-                        $idBC = $input["idBC"];
-                        $nomBL = $input["nomBL"] ?? 'Nom par défaut';
-                        date_default_timezone_set('Africa/Dakar');
-                        $dateT = new DateTime();
-                        $date = $dateT->format("Y-m-d H:i:s");
-        
-                        if (empty($idBL)) {
-                            throw new Exception("ID du bon de livraison manquant.");
-                        }   
-                        if (empty($idP) || !is_array($idP) || empty($quantite) || !is_array($quantite) || empty($Prix) || !is_array($Prix)) {
-                            throw new Exception("Données d'entrée invalides");
-                        }
-        
-                        $produitsIncoherents = [];
-        
-                        foreach ($idP as $i => $id) {
-                            // Récupérer le nom du produit
-                            $queryNom = "SELECT nomproduit FROM product WHERE idP = :idP";
-                            $stmtNom =$gc->getDb()->prepare($queryNom);
-                            $stmtNom->execute([':idP' => $id]);
-                            $resultNom = $stmtNom->fetch(PDO::FETCH_ASSOC);
-                            $nomProduit = $resultNom['nomproduit'] ?? 'Nom inconnu';
-        
-                            // Vérifier si le produit est déjà présent dans bon_livraison_produit
-                            $checkQuery = "SELECT quantite FROM bon_livraison_produit WHERE idP = :idP AND idBL = :idBL";
-                            $checkStmt = $gc->getDb()->prepare($checkQuery);
-                            $checkStmt->execute([':idP' => $id, ':idBL' => $idBL]);
-                            $checkResult = $checkStmt->fetch(PDO::FETCH_ASSOC);
-                            $qte_bl = $checkResult['quantite'] ?? 0;
-                                     // Récupérer la quantité du produit dans le bon de commande
-                    $q = "SELECT quantite FROM bon_commande_produit WHERE idP = :idP AND idBC = :idBC";
-                    $rqt = $gc->getDb()->prepare($q);
-                    $rqt->execute([':idP' => $id, ':idBC' => $idBC]);
-                    $rep = $rqt->fetch(PDO::FETCH_ASSOC);
-                    $qte_bc = $rep['quantite'] ?? 0;
-
-                    $reste = $qte_bc - $qte_bl;
-
-                    if ($quantite[$i] > $reste && $qte_bl == 0) {
-                        $produitsIncoherents[] = [
-                            'nomProduit' => $nomProduit,
-                            'quantiteSaisie' => $quantite[$i],
-                            'reste' => $reste
-                        ];
-                    } else {
-                        // Vérifier si le produit n'est pas déjà présent dans bon_livraison_produit
-                        if ($qte_bl > 0) {
-                            // Produit déjà présent, passer au suivant
-                            continue;
-                        } 
-                        else {
-                            // Insérer le produit dans bon_livraison_produit
-                            $sql = "INSERT INTO bon_livraison_produit (idBL, idP, quantite, prix_unitaire, dateadd) VALUES (:idBL, :idP, :quantite, :prix_unitaire, :dateadd)";
-                            $stmt = $gc->getDb()->prepare($sql);
-                            $stmt->execute([
-                                ':idBL' => $idBL,
-                                ':idP' => $id,
-                                ':quantite' => $quantite[$i],
-                                ':prix_unitaire' => $Prix[$i],
-                                ':dateadd' => $date
-                            ]);
-                        }
-                    }
-                }
-
-                if (!empty($produitsIncoherents)) {
-                    echo json_encode(['success' => false, 'message' => 'Incohérence dans les quantités.', 'produitsIncoherents' => $produitsIncoherents]);
-                    exit;
-                }
+                case 27:
+                    try {
+                        $input = json_decode(file_get_contents('php://input'), true);
                 
-                $r = "UPDATE bon_livraison SET Etat_Livraison = 5 WHERE idBL = :idBL";
-                $stmt =$gc->getDb()->prepare($r);
-                $stmt->execute([':idBL' => $idBL]);
-
-                if ($stmt) {
-                    echo json_encode(['success' => true]);
-                } else {
-                    echo json_encode(['success' => false, 'message' => 'Échec de la mise à jour.']);
-                }
-            }
-        } catch (PDOException $e) {
-            echo json_encode(['success' => false, 'message' => "Erreur PDO : " . $e->getMessage()]);
-        }
-        break;
+                        if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($input['enregistrerTout'])) {
+                            $idP = $input['products'];
+                            $quantite = $input['quantity'];
+                            $unites = $input['unite'];
+                            $idBL = $input['idBL'] ?? $_SESSION["idBL"];
+                            $idBC = $input["idBC"];
+                            $nomBL = $input["nomBL"] ?? 'Nom par défaut';
+                
+                            date_default_timezone_set('Africa/Dakar');
+                            $dateT = new DateTime();
+                            $date = $dateT->format("Y-m-d H:i:s");
+                
+                            if (empty($idBL)) throw new Exception("ID du bon de livraison manquant.");
+                            if (empty($idP) || !is_array($idP) || empty($quantite)) throw new Exception("Données d'entrée invalides");
+                
+                            $produitsIncoherents = [];
+                
+                            foreach ($idP as $i => $id) {
+                                $stmtNom = $gc->getDb()->prepare("SELECT nomproduit FROM product WHERE idP = :idP");
+                                $stmtNom->execute([':idP' => $id]);
+                                $nomProduit = $stmtNom->fetchColumn() ?? 'Nom inconnu';
+                
+                                $stmt = $gc->getDb()->prepare("SELECT quantite FROM bon_livraison_produit WHERE idP = :idP AND idBL = :idBL");
+                                $stmt->execute([':idP' => $id, ':idBL' => $idBL]);
+                                $qte_bl = $stmt->fetchColumn() ?? 0;
+                
+                                $stmt = $gc->getDb()->prepare("SELECT quantite FROM bon_commande_produit WHERE idP = :idP AND idBC = :idBC");
+                                $stmt->execute([':idP' => $id, ':idBC' => $idBC]);
+                                $qte_bc = $stmt->fetchColumn() ?? 0;
+                
+                                $reste = $qte_bc - $qte_bl;
+                
+                                if ($quantite[$i] > $reste && $qte_bl == 0) {
+                                    $produitsIncoherents[] = [
+                                        'nomProduit' => $nomProduit,
+                                        'quantiteSaisie' => $quantite[$i],
+                                        'reste' => $reste
+                                    ];
+                                } else if ($qte_bl == 0) {
+                                    $sql = "INSERT INTO bon_livraison_produit (idBL, idP, quantite, unite, dateadd)
+                                            VALUES (:idBL, :idP, :quantite, :unite, :dateadd)";
+                                    $stmt = $gc->getDb()->prepare($sql);
+                                    $stmt->execute([
+                                        ':idBL' => $idBL,
+                                        ':idP' => $id,
+                                        ':quantite' => $quantite[$i],
+                                        ':unite' => $unites[$i],
+                                        ':dateadd' => $date
+                                    ]);
+                                }
+                            }
+                
+                            if (!empty($produitsIncoherents)) {
+                                echo json_encode(['success' => false, 'message' => 'Incohérence dans les quantités.', 'produitsIncoherents' => $produitsIncoherents]);
+                                exit;
+                            }
+                
+                            $stmt = $gc->getDb()->prepare("UPDATE bon_livraison SET Etat_Livraison = 5 WHERE idBL = :idBL");
+                            $stmt->execute([':idBL' => $idBL]);
+                
+                            echo json_encode(['success' => true]);
+                        }
+                
+                    } catch (PDOException $e) {
+                        echo json_encode(['success' => false, 'message' => "Erreur PDO : " . $e->getMessage()]);
+                    }
+                    break;                
 
 
         case 28: // Nouveau case pour gérer la consultation des informations du bon de livraison
@@ -1273,145 +1213,140 @@ WHERE
                 break;
 
 
-    case 33:
-    try {
-        if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['enregistrerTout'])) {
-            $idP = json_decode($_POST['products'], true);
-            $Prix = json_decode($_POST['prix'], true);
-            $quantite = json_decode($_POST['quantity'], true);
-            $unites = json_decode($_POST['unite'], true);
-            $idBL = $_POST['idBL'] ?? $_SESSION["idBL"];
-            $idBC = $_POST["idBC"];
-            $nomBL = $_POST["nomBL"] ?? 'Nom par défaut';
-            date_default_timezone_set('Africa/Dakar');
-            $dateT = new DateTime();
-            $date = $dateT->format("Y-m-d H:i:s");
-
-            if (empty($idBL)) throw new Exception("ID du bon de livraison manquant.");
-            if (empty($idP) || !is_array($idP) || empty($quantite) || !is_array($quantite) || empty($Prix) || !is_array($Prix)) {
-                throw new Exception("Données d'entrée invalides");
-            }
-
-            $produitsIncoherents = [];
-
-            foreach ($idP as $i => $id) {
-                $qte_saisie = floatval($quantite[$i]);
-                $prix_saisi = floatval($Prix[$i]);
-                $unite_saisie = $unites[$i] ?? '';
-
-                // Nom du produit
-                $stmtNom = $gc->getDb()->prepare("SELECT nomproduit FROM product WHERE idP = :idP");
-                $stmtNom->execute([':idP' => $id]);
-                $nomProduit = $stmtNom->fetchColumn() ?? 'Nom inconnu';
-
-                // Quantité déjà livrée
-                $stmtLiv = $gc->getDb()->prepare("SELECT quantite, dateadd FROM bon_livraison_produit WHERE idP = :idP AND idBL = :idBL");
-                $stmtLiv->execute([':idP' => $id, ':idBL' => $idBL]);
-                $livraison = $stmtLiv->fetch(PDO::FETCH_ASSOC);
-                $qte_bl = $livraison['quantite'] ?? 0;
-                $dateadd = $livraison['dateadd'] ?? $date;
-
-                // Quantité commandée
-                $stmtCmd = $gc->getDb()->prepare("SELECT quantite FROM bon_commande_produit WHERE idP = :idP AND idBC = :idBC");
-                $stmtCmd->execute([':idP' => $id, ':idBC' => $idBC]);
-                $qte_bc = $stmtCmd->fetchColumn() ?? 0;
-
-                $reste = $qte_bc - $qte_bl;
-
-                if ($qte_saisie <= 0 || $prix_saisi <= 0 || $unite_saisie === '') {
-                    $produitsIncoherents[] = [
-                        'nomProduit' => $nomProduit,
-                        'quantiteSaisie' => $qte_saisie,
-                        'reste' => $reste
-                    ];
-                    continue;
-                }
-
-                if (!$livraison) {
-                    // ➕ Insertion
-                    if ($qte_saisie > $reste) {
-                        $produitsIncoherents[] = [
-                            'nomProduit' => $nomProduit,
-                            'quantiteSaisie' => $qte_saisie,
-                            'reste' => $reste
-                        ];
-                        continue;
-                    }
-
-                    $stmtInsert = $gc->getDb()->prepare("
-                        INSERT INTO bon_livraison_produit (idBL, idP, quantite, prix_unitaire, unite, dateadd)
-                        VALUES (:idBL, :idP, :quantite, :prix, :unite, :dateadd)
-                    ");
-                    $stmtInsert->execute([
-                        ':idBL' => $idBL,
-                        ':idP' => $id,
-                        ':quantite' => $qte_saisie,
-                        ':prix' => $prix_saisi,
-                        ':unite' => $unite_saisie,
-                        ':dateadd' => $date
-                    ]);
-                } else {
-                    if ($reste > 0) {
-                        // 🔁 Cumul
-                        $qte_nouvelle = $qte_bl + $qte_saisie;
-                        if ($qte_nouvelle > $qte_bc) {
-                            $produitsIncoherents[] = [
-                                'nomProduit' => $nomProduit,
-                                'quantiteSaisie' => $qte_saisie,
-                                'reste' => $reste
-                            ];
-                            continue;
+                case 33:
+                    try {
+                        if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['enregistrerTout'])) {
+                            $idP = json_decode($_POST['products'], true);
+                            $quantite = json_decode($_POST['quantity'], true);
+                            $unites = json_decode($_POST['unite'], true);
+                            $idBL = $_POST['idBL'] ?? $_SESSION["idBL"];
+                            $idBC = $_POST["idBC"];
+                            $nomBL = $_POST["nomBL"] ?? 'Nom par défaut';
+                
+                            date_default_timezone_set('Africa/Dakar');
+                            $dateT = new DateTime();
+                            $date = $dateT->format("Y-m-d H:i:s");
+                
+                            if (empty($idBL)) throw new Exception("ID du bon de livraison manquant.");
+                            if (empty($idP) || !is_array($idP) || empty($quantite) || !is_array($quantite)) {
+                                throw new Exception("Données d'entrée invalides");
+                            }
+                
+                            $produitsIncoherents = [];
+                
+                            foreach ($idP as $i => $id) {
+                                $qte_saisie = floatval($quantite[$i]);
+                                $unite_saisie = $unites[$i] ?? '';
+                
+                                // Récupérer le nom du produit
+                                $stmtNom = $gc->getDb()->prepare("SELECT nomproduit FROM product WHERE idP = :idP");
+                                $stmtNom->execute([':idP' => $id]);
+                                $nomProduit = $stmtNom->fetchColumn() ?? 'Nom inconnu';
+                
+                                // Récupérer la quantité déjà livrée pour ce produit dans ce BL
+                                $stmtLiv = $gc->getDb()->prepare("SELECT quantite, dateadd FROM bon_livraison_produit WHERE idP = :idP AND idBL = :idBL");
+                                $stmtLiv->execute([':idP' => $id, ':idBL' => $idBL]);
+                                $livraison = $stmtLiv->fetch(PDO::FETCH_ASSOC);
+                                $qte_bl = $livraison['quantite'] ?? 0;
+                                $dateadd = $livraison['dateadd'] ?? $date;
+                
+                                // Récupérer la quantité du bon de commande
+                                $stmtCmd = $gc->getDb()->prepare("SELECT quantite FROM bon_commande_produit WHERE idP = :idP AND idBC = :idBC");
+                                $stmtCmd->execute([':idP' => $id, ':idBC' => $idBC]);
+                                $qte_bc = $stmtCmd->fetchColumn() ?? 0;
+                
+                                $reste = $qte_bc - $qte_bl;
+                
+                                // Vérification des champs
+                                if ($qte_saisie <= 0 || $unite_saisie === '') {
+                                    $produitsIncoherents[] = [
+                                        'nomProduit' => $nomProduit,
+                                        'quantiteSaisie' => $qte_saisie,
+                                        'reste' => $reste
+                                    ];
+                                    continue;
+                                }
+                
+                                // Si le produit n'a pas encore été enregistré dans ce BL
+                                if (!$livraison) {
+                                    if ($qte_saisie > $qte_bc) {
+                                        $produitsIncoherents[] = [
+                                            'nomProduit' => $nomProduit,
+                                            'quantiteSaisie' => $qte_saisie,
+                                            'reste' => $qte_bc
+                                        ];
+                                        continue;
+                                    }
+                
+                                    $stmtInsert = $gc->getDb()->prepare("
+                                        INSERT INTO bon_livraison_produit (idBL, idP, quantite, unite, dateadd)
+                                        VALUES (:idBL, :idP, :quantite, :unite, :dateadd)
+                                    ");
+                                    $stmtInsert->execute([
+                                        ':idBL' => $idBL,
+                                        ':idP' => $id,
+                                        ':quantite' => $qte_saisie,
+                                        ':unite' => $unite_saisie,
+                                        ':dateadd' => $date
+                                    ]);
+                                } else {
+                                    // Produit déjà enregistré → cumul ou remplacement
+                                    if ($reste > 0) {
+                                        $qte_nouvelle = $qte_bl + $qte_saisie;
+                                        if ($qte_nouvelle > $qte_bc) {
+                                            $produitsIncoherents[] = [
+                                                'nomProduit' => $nomProduit,
+                                                'quantiteSaisie' => $qte_saisie,
+                                                'reste' => $reste
+                                            ];
+                                            continue;
+                                        }
+                                    } else {
+                                        $qte_nouvelle = $qte_saisie;
+                                        if ($qte_nouvelle > $qte_bc) {
+                                            $produitsIncoherents[] = [
+                                                'nomProduit' => $nomProduit,
+                                                'quantiteSaisie' => $qte_saisie,
+                                                'reste' => $reste
+                                            ];
+                                            continue;
+                                        }
+                                    }
+                
+                                    $stmtUpdate = $gc->getDb()->prepare("
+                                        UPDATE bon_livraison_produit 
+                                        SET quantite = :quantite, unite = :unite 
+                                        WHERE idBL = :idBL AND idP = :idP AND dateadd = :dateadd
+                                    ");
+                                    $stmtUpdate->execute([
+                                        ':quantite' => $qte_nouvelle,
+                                        ':unite' => $unite_saisie,
+                                        ':idBL' => $idBL,
+                                        ':idP' => $id,
+                                        ':dateadd' => $dateadd
+                                    ]);
+                                }
+                            }
+                
+                            if (!empty($produitsIncoherents)) {
+                                echo json_encode([
+                                    'success' => false,
+                                    'message' => 'Incohérences détectées.',
+                                    'produitsIncoherents' => $produitsIncoherents
+                                ]);
+                                exit;
+                            }
+                
+                            // Marquer le bon de livraison comme "en cours"
+                            $stmt = $gc->getDb()->prepare("UPDATE bon_livraison SET Etat_Livraison = 5 WHERE idBL = :idBL");
+                            $stmt->execute([':idBL' => $idBL]);
+                
+                            echo json_encode(['success' => true]);
                         }
-                    } else {
-                        // 🔁 Remplacement (reste == 0)
-                        $qte_nouvelle = $qte_saisie;
-                        if ($qte_nouvelle > $qte_bc) {
-                            $produitsIncoherents[] = [
-                                'nomProduit' => $nomProduit,
-                                'quantiteSaisie' => $qte_saisie,
-                                'reste' => $reste
-                            ];
-                            continue;
-                        }
+                    } catch (PDOException $e) {
+                        echo json_encode(['success' => false, 'message' => "Erreur PDO : " . $e->getMessage()]);
                     }
-
-                    $stmtUpdate = $gc->getDb()->prepare("
-                        UPDATE bon_livraison_produit 
-                        SET quantite = :quantite, prix_unitaire = :prix, unite = :unite 
-                        WHERE idBL = :idBL AND idP = :idP AND dateadd = :dateadd
-                    ");
-                    $stmtUpdate->execute([
-                        ':quantite' => $qte_nouvelle,
-                        ':prix' => $prix_saisi,
-                        ':unite' => $unite_saisie,
-                        ':idBL' => $idBL,
-                        ':idP' => $id,
-                        ':dateadd' => $dateadd
-                    ]);
-                }
-            }
-
-            if (!empty($produitsIncoherents)) {
-                echo json_encode([
-                    'success' => false,
-                    'message' => 'Incohérences détectées.',
-                    'produitsIncoherents' => $produitsIncoherents
-                ]);
-                exit;
-            }
-
-            $stmt = $gc->getDb()->prepare("UPDATE bon_livraison SET Etat_Livraison = 5 WHERE idBL = :idBL");
-            $stmt->execute([':idBL' => $idBL]);
-
-            echo json_encode(['success' => true]);
-
-        }
-    } catch (PDOException $e) {
-        echo json_encode(['success' => false, 'message' => "Erreur PDO : " . $e->getMessage()]);
-    }
-    break;
-
-
+                    break;                
     case 34:
       
     
@@ -2998,9 +2933,9 @@ case 44:
                                                 // $gc->getDb()->rollBack();
                                                 echo json_encode(['success' => false, 'message' => $e->getMessage()]);
                                             }
-                                            break;    
+                                            break;
+
                                             case 81:
-                                    
 
                                                 try {
                                                     $r = "SELECT distinct * FROM bon_sortie bs
@@ -3020,7 +2955,526 @@ case 44:
                                             
                                                     echo json_encode(['error' => 'Option inexistante']);
                                                 break;
-                           
+
+                                                //Générer un achat à partir d'une expression
+                                                case 82:
+                                                    try {
+                                                        $connexion = $gc->getDb();
+                                                        $idEB = intval($_POST['idEB']);
+                                                
+                                                        // Vérifie si un achat existe déjà pour cette expression
+                                                        $verif = $connexion->prepare("SELECT COUNT(*) FROM achats WHERE expression_besoin_id = :idEB");
+                                                        $verif->execute([':idEB' => $idEB]);
+                                                        if ($verif->fetchColumn() > 0) {
+                                                            echo json_encode(["message" => "Un achat a déjà été généré pour cette expression."]);
+                                                            break;
+                                                        }
+                                                
+                                                        // Vérifie que l'expression existe
+                                                        $check = $connexion->prepare("SELECT * FROM expression_besoin WHERE idEB = :idEB");
+                                                        $check->execute([':idEB' => $idEB]);
+                                                        $expression = $check->fetch(PDO::FETCH_ASSOC);
+                                                        if (!$expression) {
+                                                            echo json_encode(["message" => "Expression de besoin introuvable."]);
+                                                            break;
+                                                        }
+                                                
+                                                        // Insertion de l’achat
+                                                        $insert = $connexion->prepare("
+                                                            INSERT INTO achats (expression_besoin_id, date_creation, statut)
+                                                            VALUES (:idEB, NOW(), 'en_attente')
+                                                        ");
+                                                        $insert->execute([':idEB' => $idEB]);
+                                                
+                                                        echo json_encode(["message" => "Achat généré avec succès."]);
+                                                    } catch (Exception $e) {
+                                                        echo json_encode(["message" => "Erreur serveur : " . $e->getMessage()]);
+                                                    }
+                                                    break;
+
+                                                // Récupérer les lignes de budget associées à un budget donné avec quantité restante
+                                                case 83:
+                                                    try {
+                                                        $connexion = $gc->getDb();
+                                                        $budget_id = intval($_POST['budget_id']);
+                                                
+                                                        $query = "
+                                                            SELECT 
+                                                                lb.id AS id_LignesBudget,   -- utilisé pour data-id-ligne
+                                                                lb.id AS id,                -- utilisé pour bouton Retirer (js: retirerLigne(id))
+                                                                lb.designation, 
+                                                                lb.quantite, 
+                                                                lb.prix_unitaire, 
+                                                                lb.description,
+                                                                r.nom AS rubrique, 
+                                                                sr.nom AS sous_rubrique,
+                                                
+                                                                -- Calcul de la quantité restante
+                                                                COALESCE(lb.quantite - (
+                                                                    SELECT COALESCE(SUM(clb.quantite_reelle), 0)
+                                                                    FROM CommandeAchat_LigneBudget clb
+                                                                    INNER JOIN CommandeAchat ca ON ca.id = clb.id_CommandeAchat
+                                                                    WHERE clb.id_LignesBudget = lb.id AND ca.etat = 'validé'
+                                                                ), lb.quantite) AS quantite_restante
+                                                
+                                                            FROM lignebudget lb
+                                                            LEFT JOIN rubrique r ON lb.rubrique_id = r.id
+                                                            LEFT JOIN sousrubrique sr ON lb.sous_rubrique_id = sr.id
+                                                            WHERE lb.budget_id = :budget_id
+                                                            ORDER BY lb.designation ASC
+                                                        ";
+                                                
+                                                        $stmt = $connexion->prepare($query);
+                                                        $stmt->execute([':budget_id' => $budget_id]);
+                                                        $lignes = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                                                
+                                                        echo json_encode($lignes);
+                                                    } catch (Exception $e) {
+                                                        echo json_encode(["message" => "Erreur : " . $e->getMessage()]);
+                                                    }
+                                                    break;                                                
+                                                        
+                                                        //Récupération des budgets
+                                                        case 84:
+                                                            try {
+                                                                $connexion = $gc->getDb();
+                                                                $query = "
+                                                                    SELECT b.id, b.annee, tb.nom AS type_budget, b.date_creation, 
+                                                                           b.montant_total, b.statut
+                                                                    FROM budget b
+                                                                    LEFT JOIN typebudget tb ON b.type_budget_id = tb.id
+                                                                    ORDER BY b.date_creation DESC
+                                                                ";
+                                                                $stmt = $connexion->prepare($query);
+                                                                $stmt->execute();
+                                                                $budgets = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                                                                echo json_encode($budgets);
+                                                            } catch (Exception $e) {
+                                                                echo json_encode(["message" => "Erreur : " . $e->getMessage()]);
+                                                            }
+                                                            break;
+
+                                                            //Récupérer les types de budget
+                                                        case 85:
+                                                            try {
+                                                                $stmt = $gc->getDb()->prepare("SELECT id, nom FROM typebudget ORDER BY nom ASC");
+                                                                $stmt->execute();
+                                                                echo json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
+                                                            } catch (Exception $e) {
+                                                                echo json_encode([]);
+                                                            }
+                                                            break;
+                                                                
+                                                        //Charger les infos d’un budget
+                                                        case 86:
+                                                            try {
+                                                                $id = intval($_POST['id']);
+                                                                $stmt = $gc->getDb()->prepare("SELECT * FROM budget WHERE id = :id");
+                                                                $stmt->execute([':id' => $id]);
+                                                                echo json_encode($stmt->fetch(PDO::FETCH_ASSOC));
+                                                            } catch (Exception $e) {
+                                                                echo json_encode(["error" => $e->getMessage()]);
+                                                            }
+                                                            break;
+                                                                    
+                                                        //Mettre à jour le budget
+                                                        case 87:
+                                                            try {
+                                                                $db = $gc->getDb();
+                                                                $id = intval($_POST['id']);
+                                                                $annee = $_POST['annee'];
+                                                                $type_budget_id = intval($_POST['type_budget_id']);
+                                                                $montant = floatval($_POST['montant_total']);
+                                                                $statut = $_POST['statut'];
+                                                        
+                                                                $stmt = $db->prepare("UPDATE budget SET annee = :annee, type_budget_id = :type_budget_id, montant_total = :montant, statut = :statut WHERE id = :id");
+                                                                $stmt->execute([
+                                                                    ':annee' => $annee,
+                                                                    ':type_budget_id' => $type_budget_id,
+                                                                    ':montant' => $montant,
+                                                                    ':statut' => $statut,
+                                                                    ':id' => $id
+                                                                ]);
+                                                                echo json_encode(["success" => true, "message" => "Budget modifié avec succès."]);
+                                                            } catch (Exception $e) {
+                                                                echo json_encode(["success" => false, "message" => "Erreur : " . $e->getMessage()]);
+                                                            }
+                                                            break;
+
+                                                        //Liste achats
+                                                        case 88:
+                                                            try {
+                                                                $connexion = $gc->getDb();
+                                                                $query = "
+                                                                    SELECT a.id, a.date_creation, a.statut, 
+                                                                           eb.titre, eb.structure
+                                                                    FROM achats a
+                                                                    LEFT JOIN expression_besoin eb ON a.expression_besoin_id = eb.idEB
+                                                                    ORDER BY a.date_creation DESC
+                                                                ";
+                                                                $stmt = $connexion->prepare($query);
+                                                                $stmt->execute();
+                                                                $achats = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                                                                echo json_encode($achats);
+                                                            } catch (Exception $e) {
+                                                                echo json_encode(["message" => "Erreur : " . $e->getMessage()]);
+                                                            }
+                                                            break;
+
+                                                            //Liste expression de besoin validées
+                                                        case 89:
+                                                            try {
+                                                                $connexion = $gc->getDb();
+                                                        
+                                                                $query = "
+                                                                    SELECT eb.idEB, eb.titre, eb.structure, eb.nom, eb.prenom, eb.date_creation, eb.budget_id
+                                                                    FROM expression_besoin eb
+                                                                    WHERE eb.Etat_expression_besoin = 1
+                                                                    ORDER BY eb.date_creation DESC
+                                                                ";
+                                                                $stmt = $connexion->prepare($query);
+                                                                $stmt->execute();
+                                                                $expressions = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                                                        
+                                                                // Calcul dynamique du montant estimé
+                                                                foreach ($expressions as $index => $exp) {
+                                                                    $budgetId = $exp['budget_id'];
+                                                        
+                                                                    $stmtTotal = $connexion->prepare("
+                                                                        SELECT SUM(prix_unitaire * quantite) AS montant
+                                                                        FROM lignebudget
+                                                                        WHERE budget_id = :budgetId
+                                                                    ");
+                                                                    $stmtTotal->execute([':budgetId' => $budgetId]);
+                                                                    $montant = $stmtTotal->fetch(PDO::FETCH_ASSOC)['montant'] ?? 0;
+                                                        
+                                                                    $expressions[$index]['montant_estime'] = number_format($montant, 2, '.', '');
+                                                                }
+                                                        
+                                                                header('Content-Type: application/json');
+                                                                echo json_encode($expressions);
+                                                        
+                                                            } catch (Exception $e) {
+                                                                echo json_encode(["error" => $e->getMessage()]);
+                                                            }
+                                                            break;
                                                             
+                                                            //modification d'expression de besoin
+                                                            //charger les données
+                                                            case 90:
+                                                                try {
+                                                                    $idEB = intval($_POST['idEB']);
+                                                                    $stmt = $gc->getDb()->prepare("SELECT * FROM expression_besoin WHERE idEB = :id");
+                                                                    $stmt->execute([':id' => $idEB]);
+                                                                    echo json_encode($stmt->fetch(PDO::FETCH_ASSOC));
+                                                                } catch (Exception $e) {
+                                                                    echo json_encode(["error" => $e->getMessage()]);
+                                                                }
+                                                                break;
+                                                            //Enregistrer les modifications
+                                                            case 91:
+                                                                try {
+                                                                    $db = $gc->getDb();
+                                                                    $stmt = $db->prepare("
+                                                                        UPDATE expression_besoin 
+                                                                        SET titre = :titre, structure = :structure, nom = :nom, prenom = :prenom 
+                                                                        WHERE idEB = :idEB
+                                                                    ");
+                                                                    $stmt->execute([
+                                                                        ':titre' => $_POST['titre'],
+                                                                        ':structure' => $_POST['structure'],
+                                                                        ':nom' => $_POST['nom'],
+                                                                        ':prenom' => $_POST['prenom'],
+                                                                        ':idEB' => $_POST['idEB']
+                                                                    ]);
+                                                                    echo json_encode(["success" => true, "message" => "Expression modifiée avec succès."]);
+                                                                } catch (Exception $e) {
+                                                                    echo json_encode(["success" => false, "message" => "Erreur : " . $e->getMessage()]);
+                                                                }
+                                                                break;
+                                                            
+                                                            //Supprimer une ligne de budget d'une expression
+                                                            case 92:
+                                                                try {
+                                                                    $id = intval($_POST['ligne_id']);
+                                                                    $stmt = $gc->getDb()->prepare("DELETE FROM lignebudget WHERE id = :id");
+                                                                    $stmt->execute([':id' => $id]);
+                                                                    echo json_encode(["message" => "Ligne supprimée avec succès."]);
+                                                                } catch (Exception $e) {
+                                                                    echo json_encode(["message" => "Erreur : " . $e->getMessage()]);
+                                                                }
+                                                                break;
+                                                            
+                                                            // Charger les rubriques disponibles dans un budget
+                                                            case 93:
+                                                                try {
+                                                                    $budget_id = intval($_POST['budget_id']);
+                                                                    $stmt = $gc->getDb()->prepare("
+                                                                        SELECT DISTINCT r.id, r.nom
+                                                                        FROM lignebudget lb
+                                                                        JOIN rubrique r ON lb.rubrique_id = r.id
+                                                                        WHERE lb.budget_id = :budget_id
+                                                                        ORDER BY r.nom
+                                                                    ");
+                                                                    $stmt->execute([':budget_id' => $budget_id]);
+                                                                    echo json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
+                                                                } catch (Exception $e) {
+                                                                    echo json_encode(["message" => "Erreur : " . $e->getMessage()]);
+                                                                }
+                                                                break;
+                                                                
+                                                            // Charger les lignes de budget selon rubrique et sous-rubrique
+                                                            case 94:
+                                                                try {
+                                                                    $budget_id = intval($_POST['budget_id']);
+                                                                    $rubrique_id = intval($_POST['rubrique_id']);
+                                                            
+                                                                    $stmt = $gc->getDb()->prepare("
+                                                                        SELECT id, designation
+                                                                        FROM lignebudget
+                                                                        WHERE budget_id = :budget_id AND rubrique_id = :rubrique_id
+                                                                        ORDER BY designation
+                                                                    ");
+                                                                    $stmt->execute([
+                                                                        ':budget_id' => $budget_id,
+                                                                        ':rubrique_id' => $rubrique_id
+                                                                    ]);
+                                                                    echo json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
+                                                                } catch (Exception $e) {
+                                                                    echo json_encode(["message" => "Erreur : " . $e->getMessage()]);
+                                                                }
+                                                                break;
+                                                            
+
+                                                            // Ajouter une ligne existante à une expression (rattachement)
+                                                            case 95:
+                                                                try {
+                                                                    $db = $gc->getDb();
+                                                            
+                                                                    $stmt = $db->prepare("
+                                                                        UPDATE lignebudget 
+                                                                        SET rubrique_id = :rubrique_id
+                                                                        WHERE id = :ligne_id AND budget_id = :budget_id
+                                                                    ");
+                                                            
+                                                                    $stmt->execute([
+                                                                        ':rubrique_id' => intval($_POST['rubrique_id']),
+                                                                        ':ligne_id' => intval($_POST['ligne_id']),
+                                                                        ':budget_id' => intval($_POST['budget_id']),
+                                                                    ]);
+                                                            
+                                                                    echo json_encode(["message" => "Ligne ajoutée à l'expression avec succès."]);
+                                                                } catch (Exception $e) {
+                                                                    echo json_encode(["message" => "Erreur : " . $e->getMessage()]);
+                                                                }
+                                                                break;
+                                                                
+                                                                //Récupération de plusieurs lignes par ID (pour le PDF)
+                                                            case 96:
+                                                                try {
+                                                                    $connexion = $gc->getDb();
+                                                                    $ids = $_POST['ligne_ids'] ?? [];
+                                                            
+                                                                    if (!is_array($ids) || empty($ids)) {
+                                                                        echo json_encode([]);
+                                                                        exit;
+                                                                    }
+                                                            
+                                                                    // Construction dynamique de la clause IN
+                                                                    $placeholders = implode(',', array_fill(0, count($ids), '?'));
+                                                            
+                                                                    $query = "
+                                                                        SELECT lb.id, lb.designation, lb.quantite, lb.prix_unitaire, lb.description,
+                                                                                lb.prix_reel, lb.quantite_reelle,
+                                                                                r.nom AS rubrique, sr.nom AS sous_rubrique
+                                                                        FROM lignebudget lb
+                                                                        LEFT JOIN rubrique r ON lb.rubrique_id = r.id
+                                                                        LEFT JOIN sousrubrique sr ON lb.sous_rubrique_id = sr.id
+                                                                        WHERE lb.id IN ($placeholders)
+                                                                    ";
+                                                            
+                                                                    $stmt = $connexion->prepare($query);
+                                                                    $stmt->execute($ids);
+                                                                    $lignes = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                                                            
+                                                                    echo json_encode($lignes);
+                                                                } catch (Exception $e) {
+                                                                    echo json_encode(["message" => "Erreur : " . $e->getMessage()]);
+                                                                }
+                                                                break;
+
+                                                            //Mettre à jour prix_reel et quantite_reelle
+                                                            case 97:
+                                                                try {
+                                                                    $db = $gc->getDb();
+                                                                    $ligne_id = intval($_POST['ligne_id']);
+                                                                    $prix_reel = floatval($_POST['prix_reel']);
+                                                                    $quantite_reelle = floatval($_POST['quantite_reelle']);
+                                                            
+                                                                    $stmt = $db->prepare("
+                                                                        UPDATE lignebudget 
+                                                                        SET prix_reel = :prix_reel, quantite_reelle = :quantite_reelle
+                                                                        WHERE id = :ligne_id
+                                                                    ");
+                                                                    $stmt->execute([
+                                                                        ':prix_reel' => $prix_reel,
+                                                                        ':quantite_reelle' => $quantite_reelle,
+                                                                        ':ligne_id' => $ligne_id
+                                                                    ]);
+                                                            
+                                                                    echo json_encode(["success" => true, "message" => "Ligne mise à jour avec succès."]);
+                                                                } catch (Exception $e) {
+                                                                    echo json_encode(["success" => false, "message" => "Erreur : " . $e->getMessage()]);
+                                                                }
+                                                                break;
+                                                                    
+                                                            //récupérer les fournisseurs
+                                                            case 98:
+                                                                try {
+                                                                    $stmt = $gc->getDb()->prepare("SELECT * FROM fournisseur ORDER BY entreprise ASC");
+                                                                    $stmt->execute();
+                                                                    echo json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
+                                                                } catch (Exception $e) {
+                                                                    echo json_encode([]);
+                                                                }
+                                                                break;
+
+                                                            //ajouter un fournisseur
+                                                            case 99:
+                                                                try {
+                                                                    $stmt = $gc->getDb()->prepare("
+                                                                        INSERT INTO fournisseur (nomF, prenomF, adresseF, telF, emailF, entreprise, ville)
+                                                                        VALUES (:nomF, :prenomF, :adresseF, :telF, :emailF, :entreprise, :ville)
+                                                                    ");
+                                                                    $stmt->execute([
+                                                                        ':nomF' => $_POST['nomF'],
+                                                                        ':prenomF' => $_POST['prenomF'],
+                                                                        ':adresseF' => $_POST['adresseF'],
+                                                                        ':telF' => $_POST['telF'],
+                                                                        ':emailF' => $_POST['emailF'],
+                                                                        ':entreprise' => $_POST['entreprise'],
+                                                                        ':ville' => $_POST['ville'],
+                                                                    ]);
+                                                                    echo json_encode(["message" => "Fournisseur ajouté avec succès."]);
+                                                                } catch (Exception $e) {
+                                                                    echo json_encode(["message" => "Erreur : " . $e->getMessage()]);
+                                                                }
+                                                                break;                                                                
+                                                            
+                                                            // Créer une commande d'achat avec ses lignes
+                                                            case 100:
+                                                                try {
+                                                                    $db = $gc->getDb();
+                                                            
+                                                                    $ligne_ids          = $_POST['ligne_ids'] ?? [];
+                                                                    $quantites          = $_POST['quantites'] ?? [];
+                                                                    $prix               = $_POST['prix'] ?? [];
+                                                                    $fournisseurs       = $_POST['fournisseurs'] ?? [];
+                                                                    $mode_reglements    = $_POST['mode_reglement'] ?? [];
+                                                                    $modalite_paiements = $_POST['modalite_paiement'] ?? [];
+                                                            
+                                                                    $n = count($ligne_ids);
+                                                                    if (
+                                                                        $n === 0 ||
+                                                                        $n !== count($quantites) ||
+                                                                        $n !== count($prix) ||
+                                                                        $n !== count($fournisseurs) ||
+                                                                        $n !== count($mode_reglements) ||
+                                                                        $n !== count($modalite_paiements)
+                                                                    ) {
+                                                                        echo json_encode(["success" => false, "message" => "Données incohérentes."]);
+                                                                        return;
+                                                                    }
+                                                            
+                                                                    // 🔍 Vérifier que les quantités demandées ne dépassent pas les quantités restantes
+                                                                    for ($i = 0; $i < $n; $i++) {
+                                                                        $idLigne = intval($ligne_ids[$i]);
+                                                                        $qte    = floatval($quantites[$i]);
+                                                            
+                                                                        $stmtRestante = $db->prepare("
+                                                                            SELECT lb.quantite - COALESCE((
+                                                                                SELECT SUM(clb.quantite_reelle)
+                                                                                FROM CommandeAchat_LigneBudget clb
+                                                                                JOIN CommandeAchat ca ON ca.id = clb.id_CommandeAchat
+                                                                                WHERE clb.id_LignesBudget = lb.id AND ca.etat = 'validé'
+                                                                            ), 0) AS quantite_restante
+                                                                            FROM lignebudget lb
+                                                                            WHERE lb.id = :idLigne
+                                                                        ");
+                                                                        $stmtRestante->execute([':idLigne' => $idLigne]);
+                                                                        $reste = floatval($stmtRestante->fetchColumn());
+                                                            
+                                                                        if ($qte > $reste) {
+                                                                            echo json_encode([
+                                                                                "success" => false,
+                                                                                "message" => "Quantité réelle ($qte) dépasse la quantité restante ($reste) pour la ligne " . ($i + 1)
+                                                                            ]);
+                                                                            return;
+                                                                        }
+                                                                    }
+                                                            
+                                                                    // ✅ Création de la commande
+                                                                    $montant_total = 0;
+                                                                    for ($i = 0; $i < $n; $i++) {
+                                                                        $montant_total += floatval($quantites[$i]) * floatval($prix[$i]);
+                                                                    }
+                                                            
+                                                                    $nom_commande = "commande_" . date("Ymd_His");
+                                                                    $etat = "en_attente";
+                                                            
+                                                                    $stmt = $db->prepare("INSERT INTO CommandeAchat (nom, montant_total, etat) VALUES (:nom, :montant_total, :etat)");
+                                                                    $stmt->execute([
+                                                                        ':nom' => $nom_commande,
+                                                                        ':montant_total' => $montant_total,
+                                                                        ':etat' => $etat
+                                                                    ]);
+                                                                    $commande_id = $db->lastInsertId();
+                                                            
+                                                                    // ✅ Insertion des lignes avec les nouveaux champs
+                                                                    $stmtLigne = $db->prepare("
+                                                                        INSERT INTO CommandeAchat_LigneBudget 
+                                                                        (id_CommandeAchat, id_LignesBudget, prix_reel, quantite_reelle, id_fournisseur, date_ajout, mode_reglement, modalite_paiement)
+                                                                        VALUES (:id_commande, :id_ligne, :prix, :quantite, :id_fournisseur, NOW(), :mode_reglement, :modalite_paiement)
+                                                                    ");
+                                                            
+                                                                    for ($i = 0; $i < $n; $i++) {
+                                                                        $idLigne = intval($ligne_ids[$i]);
+                                                                        $qte = floatval($quantites[$i]);
+                                                                        $p = floatval($prix[$i]);
+                                                                        $idf_raw = $fournisseurs[$i];
+                                                                        $idf = intval($idf_raw);
+                                                                        $reglement = trim($mode_reglements[$i]);
+                                                                        $modalite  = trim($modalite_paiements[$i]);
+                                                            
+                                                                        if ($idLigne <= 0 || $qte <= 0 || $p < 0 || empty($idf_raw) || !is_numeric($idf_raw) || $idf <= 0 || !$reglement || !$modalite) {
+                                                                            echo json_encode(["success" => false, "message" => "Erreur de saisie sur la ligne " . ($i + 1)]);
+                                                                            return;
+                                                                        }
+                                                            
+                                                                        $checkFournisseur = $db->prepare("SELECT idF FROM Fournisseur WHERE idF = :id");
+                                                                        $checkFournisseur->execute([':id' => $idf]);
+                                                                        if (!$checkFournisseur->fetch()) {
+                                                                            echo json_encode(["success" => false, "message" => "Fournisseur ID $idf inexistant."]);
+                                                                            return;
+                                                                        }
+                                                            
+                                                                        $stmtLigne->execute([
+                                                                            ':id_commande'       => $commande_id,
+                                                                            ':id_ligne'          => $idLigne,
+                                                                            ':prix'              => $p,
+                                                                            ':quantite'          => $qte,
+                                                                            ':id_fournisseur'    => $idf,
+                                                                            ':mode_reglement'    => $reglement,
+                                                                            ':modalite_paiement' => $modalite
+                                                                        ]);
+                                                                    }
+                                                            
+                                                                    echo json_encode(["success" => true, "message" => "Commande enregistrée avec succès."]);
+                                                            
+                                                                } catch (Exception $e) {
+                                                                    error_log("❌ ERREUR COMMANDE : " . $e->getMessage());
+                                                                    echo json_encode(["success" => false, "message" => "Erreur serveur : " . $e->getMessage()]);
+                                                                }
+                                                                return;                                                                                                                                                                                                                                                
                                 }
                                 ?>

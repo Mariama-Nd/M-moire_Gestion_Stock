@@ -1,106 +1,153 @@
 <?php
-session_start(); // Démarrage de la session pour récupérer les données stockées
-// Récupération des variables de l'URL (si elles sont passées en GET)
-$idBL = $_GET['idBL'];
-$idBC = $_GET['idBC'];
-$nomBL = $_GET['nomBL'];
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
 
+require_once '../../Categorie/Categorie/config/db.php';
 
+$db = new DB();
+$connexion = $db->connect();
 
+$idEB = $_GET['idEB'] ?? null;
+if (!$idEB) {
+    echo "Paramètre manquant.";
+    exit;
+}
 
+$titre = 'Expression inconnue';
+$budgetId = null;
+
+$stmt = $connexion->prepare("SELECT titre, budget_id FROM expression_besoin WHERE idEB = :id");
+$stmt->execute([':id' => $idEB]);
+$exp = $stmt->fetch(PDO::FETCH_ASSOC);
+
+if ($exp) {
+    $titre = $exp['titre'] ?? 'Sans titre';
+    $budgetId = $exp['budget_id'] ?? 0;
+} else {
+    echo "Expression introuvable.";
+    exit;
+}
 ?>
 
 <!DOCTYPE html>
-<html lang="fr">
-
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link href="../../css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Poppins:300,400,500,600,700" />
-    <link href=" ../../ressources/dist_assets/plugins/custom/fullcalendar/fullcalendar.bundle.css" rel="stylesheet" type="text/css" />
-    <link href=" ../../ressources/dist_assets/plugins/global/plugins.bundle.css" rel="stylesheet" type="text/css" />
-    <link href=" ../../ressources/dist_assets/css/style.bundle.css" rel="stylesheet" type="text/css" />
-    <link href=" ../../ressources/dist_assets/css/style.css" rel="stylesheet" type="text/css" />
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+<title>Lignes de Budget</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css" rel="stylesheet">
 
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <title>Bon de Commande</title>
-    <style>
-   
-
-        form {
-            background-color: #fff;
-            border-radius: 12px;
-            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
-            padding: 30px;
-            width: 100%;
-            max-width: 1100px;
-            box-sizing: border-box;
-            transition: all 0.3s ease;
-        }
-
-        h1,
-        h2 {
-            color: #2e7d32;
-            font-family: 'Helvetica Neue', sans-serif;
-            margin-bottom: 20px;
-        }
-
-        label,
-        select,
-        input[type="number"] {
-            display: block;
-            width: 100%;
-            margin-bottom: 15px;
-        }
-
-        select,
-        input[type="number"] {
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 6px;
-            font-size: 16px;
-            box-sizing: border-box;
-        }
-
-        .product-item {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 20px;
-            padding: 15px;
-            background-color: #f9fafb;
-            border: 1px solid #e0e0e0;
-            border-radius: 8px;
-            box-sizing: border-box;
-        }
-
-        .product-item label {
-            margin-right: 0px;
-            /* Réduire l'espace entre le label et l'input */
-            margin-left: 10px;
-        }
-
-        .product-item input[type="number"] {
-            margin-right: 15px;
-            /* Espace entre l'input et les boutons */
-        }
-
-        .product-item button {
-            margin-left: 10px;
-            /* Espace entre les boutons */
-        }
-
-      
-      
-
-     
-
-
-    </style>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+    <link href="https://cdn.datatables.net/1.11.5/css/jquery.dataTables.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.datatables.net/1.11.5/css/jquery.dataTables.min.css" rel="stylesheet">
+    <link href="../../ressources/dist_assets/plugins/custom/fullcalendar/fullcalendar.bundle.css" rel="stylesheet" type="text/css" />
+    <link href="../../ressources/dist_assets/plugins/global/plugins.bundle.css" type="text/css" />
+    <link href="../../ressources/dist_assets/css/style.bundle.css" rel="stylesheet" type="text/css" />
+    <link href="../../ressources/dist_assets/css/style.css" rel="stylesheet" type="text/css" />
+    <link href="../../ressources/dist_assets/plugins/custom/datatables/datatables.bundle.css" rel="stylesheet" type="text/css" />
+    <link rel="stylesheet" href="../../css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
+<style>
+    body{
+        flex-direction: column;
+        background-color: #f8f9fa;
+    }
+    #sales-table td, #sales-table th {
+    vertical-align: middle;
+    }
 
+    .btn-custom {
+        padding: 5px 10px;
+        font-size: 0.875rem;
+        border-radius: 0.3rem;
+    }
+
+    #searchInput, #filterStatus {
+        max-width: 300px;
+    }
+
+    .card-title {
+        font-size: 1rem;
+    }
+
+    .page-link {
+        cursor: pointer;
+    }
+
+    .table-actions button {
+            margin-right: 5px;
+        }
+        .title-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .title-bar h1 {
+            font-size: 24px;
+            color: #198754;
+        }
+
+        .btn-retour {
+        background-color: #6c757d; /* Gris visible */
+        color: white;
+        border: none;
+    }
+
+    .btn-retour:hover {
+        background-color: #5a6268; /* Gris foncé */
+        color: white;
+    }
+
+    .btn-ajout {
+        background-color: #198754; /* Vert bootstrap visible */
+        color: white;
+        border: none;
+    }
+
+    .btn-ajout:hover {
+        background-color: #146c43; /* Vert foncé */
+        color: white;
+    }
+
+    /* Couleur verte UAHB + style personnalisé */
+    .swal-custom {
+        background: #e8f6ec;
+        border: 2px solid #28a745;
+        border-radius: 12px;
+        font-family: 'Segoe UI', sans-serif;
+    }
+
+    .swal2-title {
+        color: #155724 !important;
+        font-weight: bold;
+    }
+
+    .swal2-icon-success {
+        color: #28a745 !important;
+        border-color: #28a745 !important;
+    }
+
+    .swal2-toast .swal2-title {
+        font-size: 16px;
+    }
+
+    /* Ajout du logo UAHB dans les popups non toast */
+    .swal2-popup:not(.swal2-toast)::before {
+        content: "";
+        background: url('../../ressources/img/logo_uahb.png') no-repeat center center;
+        background-size: 60px;
+        display: block;
+        margin: 0 auto 10px;
+        height: 60px;
+        width: 60px;
+        opacity: 0.9;
+    }
+
+</style>
 <body id="kt_body" class="header-fixed header-tablet-and-mobile-fixed toolbar-enabled toolbar-fixed aside-enabled aside-fixed" style="--kt-toolbar-height:55px;--kt-toolbar-height-tablet-and-mobile:55px ">
     <div class="d-flex flex-column flex-root">
         <div class="page d-flex flex-row flex-column-fluid">
@@ -148,20 +195,45 @@ $nomBL = $_GET['nomBL'];
                                     <span class="menu-title">Acceuil</span>
                                 </a>
                             </div>
-                            <div class="" style="margin-left: 30px; margin-top:20px">
-                                <a class="menu-link  active" href="../../Gestion_example2/nouveau_product.php">
+                            <div data-kt-menu-trigger="click" class="menu-item menu-accordion">
+                                <span class="menu-link">
                                     <span class="menu-icon">
                                         <span class="svg-icon svg-icon-2">
                                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
-                                                <rect x="2" y="2" width="9" height="9" rx="2" fill="black" />
-                                                <rect opacity="0.3" x="13" y="2" width="9" height="9" rx="2" fill="black" />
-                                                <rect opacity="0.3" x="13" y="13" width="9" height="9" rx="2" fill="black" />
-                                                <rect opacity="0.3" x="2" y="13" width="9" height="9" rx="2" fill="black" />
+                                                <path opacity="0.3" d="M20.335 15.537C21.725 14.425 21.57 12.812 21.553 11.224C21.4407 9.50899 20.742 7.88483 19.574 6.624C18.5503 5.40102 17.2668 4.4216 15.817 3.757C14.4297 3.26981 12.9703 3.01966 11.5 3.01701C8.79576 2.83108 6.11997 3.66483 4 5.35398C2.289 6.72498 1.23101 9.12497 2.68601 11.089C3.22897 11.6881 3.93029 12.1214 4.709 12.339C5.44803 12.6142 6.24681 12.6888 7.024 12.555C6.88513 12.9965 6.85078 13.4644 6.92367 13.9215C6.99656 14.3786 7.17469 14.8125 7.444 15.189C7.73891 15.5299 8.10631 15.8006 8.51931 15.9812C8.93232 16.1619 9.38047 16.2478 9.831 16.233C10.0739 16.2296 10.3141 16.1807 10.539 16.089C10.7371 15.9871 10.9288 15.8732 11.113 15.748C12.1594 15.2831 13.3275 15.1668 14.445 15.416C15.7795 15.7213 17.1299 15.952 18.49 16.107C18.7927 16.1438 19.0993 16.1313 19.398 16.07C19.7445 15.9606 20.0639 15.7789 20.335 15.537Z" fill="black" />
+                                                <path d="M19.008 16.114C18.9486 16.6061 18.7934 17.0817 18.551 17.514C18.229 18.114 17.581 18.314 17.103 18.752C16.457 19.343 16.595 20.38 16.632 21.164C16.6522 21.3437 16.621 21.5254 16.542 21.688C16.4335 21.835 16.2751 21.9373 16.0965 21.9758C15.9179 22.0143 15.7314 21.9863 15.572 21.897C15.2577 21.7083 15.0072 21.4296 14.853 21.097C14.581 20.607 14.362 20.085 14.053 19.612C13.3182 18.7548 12.4201 18.0525 11.411 17.546C10.9334 17.1942 10.5857 16.6942 10.422 16.124C10.459 16.111 10.499 16.106 10.536 16.09C10.7336 15.9879 10.925 15.8741 11.109 15.749C12.1554 15.2842 13.3234 15.1678 14.441 15.417C15.7754 15.7223 17.1259 15.953 18.486 16.108C18.6598 16.1191 18.834 16.1211 19.008 16.114ZM18.8 10.278V3C18.8 2.73478 18.6946 2.48044 18.5071 2.29291C18.3196 2.10537 18.0652 2 17.8 2C17.5348 2 17.2804 2.10537 17.0929 2.29291C16.9053 2.48044 16.8 2.73478 16.8 3V10.278C16.4187 10.4981 16.1207 10.8379 15.9522 11.2447C15.7838 11.6514 15.7542 12.1024 15.8681 12.5277C15.9821 12.953 16.2332 13.3287 16.5825 13.5967C16.9318 13.8648 17.3597 14.0101 17.8 14.0101C18.2403 14.0101 18.6682 13.8648 19.0175 13.5967C19.3668 13.3287 19.6179 12.953 19.7318 12.5277C19.8458 12.1024 19.8162 11.6514 19.6477 11.2447C19.4793 10.8379 19.1813 10.4981 18.8 10.278ZM13.8 2C13.5348 2 13.2804 2.10537 13.0929 2.29291C12.9053 2.48044 12.8 2.73478 12.8 3V8.586L12.312 9.07397C11.8792 8.95363 11.4188 8.98003 11.0026 9.14899C10.5864 9.31794 10.2379 9.61994 10.0115 10.0079C9.78508 10.3958 9.69351 10.8478 9.75109 11.2933C9.80867 11.7387 10.0122 12.1526 10.3298 12.4702C10.6474 12.7878 11.0612 12.9913 11.5067 13.0489C11.9522 13.1065 12.4042 13.0149 12.7921 12.7885C13.18 12.5621 13.4821 12.2136 13.651 11.7974C13.82 11.3812 13.8463 10.9207 13.726 10.488L14.507 9.70697C14.6945 9.51948 14.7999 9.26519 14.8 9V3C14.8 2.73478 14.6946 2.48044 14.5071 2.29291C14.3196 2.10537 14.0652 2 13.8 2ZM9.79999 2C9.53478 2 9.28042 2.10537 9.09289 2.29291C8.90535 2.48044 8.79999 2.73478 8.79999 3V4.586L7.31199 6.07397C6.87924 5.95363 6.41882 5.98004 6.00263 6.14899C5.58644 6.31794 5.23792 6.61994 5.0115 7.00787C4.78508 7.39581 4.69351 7.84781 4.75109 8.29327C4.80867 8.73874 5.01216 9.1526 5.32977 9.47021C5.64739 9.78783 6.06124 9.99131 6.50671 10.0489C6.95218 10.1065 7.40417 10.0149 7.7921 9.78851C8.18004 9.56209 8.48207 9.21355 8.65102 8.79736C8.81997 8.38117 8.84634 7.92073 8.726 7.48798L10.507 5.70697C10.6945 5.51948 10.7999 5.26519 10.8 5V3C10.8 2.73478 10.6946 2.48044 10.5071 2.29291C10.3196 2.10537 10.0652 2 9.79999 2Z" fill="black" />
+
+
                                             </svg>
                                         </span>
                                     </span>
-                                    <span class="menu-title">Ajouter un produit</span>
-                                </a>
+                                    <span class="menu-title" >Produits</span>
+                                    <span class="menu-arrow"></span>
+                                </span>
+                                <div class="menu-sub menu-sub-accordion " kt-hidden-height="507" style="">
+                                    <div class="">
+                                        <a class="menu-link" href="../../Gestion_example2/nouveau_product.php">
+                                            <span class="menu-bullet">
+                                                <span class="bullet bullet-dot"></span>
+                                            </span>
+                                            <span class="menu-title">Ajouter un produit</span>
+                                        </a>
+                                    </div>
+                                   
+                                </div>
+                                <div class="menu-sub menu-sub-accordion menu-active-bg" kt-hidden-height="507" style="">
+                                    <div class="menu-item">
+                                        <a class="menu-link" href="../../Produit/Liste_Produit.php">
+                                            <span class="menu-bullet">
+                                                <span class="bullet bullet-dot"></span>
+                                            </span>
+                                            <span class="menu-title">Liste des produits</span>
+                                        </a>
+                                    </div>
+                                   
+                                </div>
+                              
+                                
                             </div>
                             <div data-kt-menu-trigger="click" class="menu-item menu-accordion">
                                 <span class="menu-link">
@@ -226,7 +298,7 @@ $nomBL = $_GET['nomBL'];
                                             <span class="menu-bullet">
                                                 <span class="bullet bullet-dot"></span>
                                             </span>
-                                            <span class="menu-title">Liste des commande</span>
+                                            <span class="menu-title">Liste des commandes</span>
                                         </a>
                                     </div>
                                    
@@ -237,7 +309,7 @@ $nomBL = $_GET['nomBL'];
                                             <span class="menu-bullet">
                                                 <span class="bullet bullet-dot"></span>
                                             </span>
-                                            <span class="menu-title">historique des commande</span>
+                                            <span class="menu-title">historique des commandes</span>
                                         </a>
                                     </div>
                                    
@@ -272,18 +344,19 @@ $nomBL = $_GET['nomBL'];
                                     </div>
                                    
                                 </div>
-                              
                                 <div class="menu-sub menu-sub-accordion " kt-hidden-height="507" style="">
                                     <div class="">
                                         <a class="menu-link" href="../../Gestion_example2/Livraison/historique_livraison.php">
                                             <span class="menu-bullet">
                                                 <span class="bullet bullet-dot"></span>
                                             </span>
-                                            <span class="menu-title">historique des Livraisons</span>
+                                            <span class="menu-title">historique des livraisons</span>
                                         </a>
                                     </div>
                                    
                                 </div>
+                              
+                              
                                 
                             </div>
                             <div data-kt-menu-trigger="click" class="menu-item menu-accordion">
@@ -353,6 +426,17 @@ $nomBL = $_GET['nomBL'];
                                     </div>
                                    
                                 </div>
+                                <div class="menu-sub menu-sub-accordion " kt-hidden-height="507" style="">
+                                    <div class="">
+                                        <a class="menu-link" href="../../Gestion_example2/Sortie/historique_sortie.php">
+                                            <span class="menu-bullet">
+                                                <span class="bullet bullet-dot"></span>
+                                            </span>
+                                            <span class="menu-title">historique des sorties</span>
+                                        </a>
+                                    </div>
+                                   
+                                </div>
                               
                               
                                 
@@ -398,47 +482,7 @@ $nomBL = $_GET['nomBL'];
                               
                                 
                             </div>
-                            <div data-kt-menu-trigger="click" class="menu-item menu-accordion">
-                                <span class="menu-link">
-                                    <span class="menu-icon">
-                                        <span class="svg-icon svg-icon-2">
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
-                                                <path opacity="0.3" d="M20.335 15.537C21.725 14.425 21.57 12.812 21.553 11.224C21.4407 9.50899 20.742 7.88483 19.574 6.624C18.5503 5.40102 17.2668 4.4216 15.817 3.757C14.4297 3.26981 12.9703 3.01966 11.5 3.01701C8.79576 2.83108 6.11997 3.66483 4 5.35398C2.289 6.72498 1.23101 9.12497 2.68601 11.089C3.22897 11.6881 3.93029 12.1214 4.709 12.339C5.44803 12.6142 6.24681 12.6888 7.024 12.555C6.88513 12.9965 6.85078 13.4644 6.92367 13.9215C6.99656 14.3786 7.17469 14.8125 7.444 15.189C7.73891 15.5299 8.10631 15.8006 8.51931 15.9812C8.93232 16.1619 9.38047 16.2478 9.831 16.233C10.0739 16.2296 10.3141 16.1807 10.539 16.089C10.7371 15.9871 10.9288 15.8732 11.113 15.748C12.1594 15.2831 13.3275 15.1668 14.445 15.416C15.7795 15.7213 17.1299 15.952 18.49 16.107C18.7927 16.1438 19.0993 16.1313 19.398 16.07C19.7445 15.9606 20.0639 15.7789 20.335 15.537Z" fill="black" />
-                                                <path d="M19.008 16.114C18.9486 16.6061 18.7934 17.0817 18.551 17.514C18.229 18.114 17.581 18.314 17.103 18.752C16.457 19.343 16.595 20.38 16.632 21.164C16.6522 21.3437 16.621 21.5254 16.542 21.688C16.4335 21.835 16.2751 21.9373 16.0965 21.9758C15.9179 22.0143 15.7314 21.9863 15.572 21.897C15.2577 21.7083 15.0072 21.4296 14.853 21.097C14.581 20.607 14.362 20.085 14.053 19.612C13.3182 18.7548 12.4201 18.0525 11.411 17.546C10.9334 17.1942 10.5857 16.6942 10.422 16.124C10.459 16.111 10.499 16.106 10.536 16.09C10.7336 15.9879 10.925 15.8741 11.109 15.749C12.1554 15.2842 13.3234 15.1678 14.441 15.417C15.7754 15.7223 17.1259 15.953 18.486 16.108C18.6598 16.1191 18.834 16.1211 19.008 16.114ZM18.8 10.278V3C18.8 2.73478 18.6946 2.48044 18.5071 2.29291C18.3196 2.10537 18.0652 2 17.8 2C17.5348 2 17.2804 2.10537 17.0929 2.29291C16.9053 2.48044 16.8 2.73478 16.8 3V10.278C16.4187 10.4981 16.1207 10.8379 15.9522 11.2447C15.7838 11.6514 15.7542 12.1024 15.8681 12.5277C15.9821 12.953 16.2332 13.3287 16.5825 13.5967C16.9318 13.8648 17.3597 14.0101 17.8 14.0101C18.2403 14.0101 18.6682 13.8648 19.0175 13.5967C19.3668 13.3287 19.6179 12.953 19.7318 12.5277C19.8458 12.1024 19.8162 11.6514 19.6477 11.2447C19.4793 10.8379 19.1813 10.4981 18.8 10.278ZM13.8 2C13.5348 2 13.2804 2.10537 13.0929 2.29291C12.9053 2.48044 12.8 2.73478 12.8 3V8.586L12.312 9.07397C11.8792 8.95363 11.4188 8.98003 11.0026 9.14899C10.5864 9.31794 10.2379 9.61994 10.0115 10.0079C9.78508 10.3958 9.69351 10.8478 9.75109 11.2933C9.80867 11.7387 10.0122 12.1526 10.3298 12.4702C10.6474 12.7878 11.0612 12.9913 11.5067 13.0489C11.9522 13.1065 12.4042 13.0149 12.7921 12.7885C13.18 12.5621 13.4821 12.2136 13.651 11.7974C13.82 11.3812 13.8463 10.9207 13.726 10.488L14.507 9.70697C14.6945 9.51948 14.7999 9.26519 14.8 9V3C14.8 2.73478 14.6946 2.48044 14.5071 2.29291C14.3196 2.10537 14.0652 2 13.8 2ZM9.79999 2C9.53478 2 9.28042 2.10537 9.09289 2.29291C8.90535 2.48044 8.79999 2.73478 8.79999 3V4.586L7.31199 6.07397C6.87924 5.95363 6.41882 5.98004 6.00263 6.14899C5.58644 6.31794 5.23792 6.61994 5.0115 7.00787C4.78508 7.39581 4.69351 7.84781 4.75109 8.29327C4.80867 8.73874 5.01216 9.1526 5.32977 9.47021C5.64739 9.78783 6.06124 9.99131 6.50671 10.0489C6.95218 10.1065 7.40417 10.0149 7.7921 9.78851C8.18004 9.56209 8.48207 9.21355 8.65102 8.79736C8.81997 8.38117 8.84634 7.92073 8.726 7.48798L10.507 5.70697C10.6945 5.51948 10.7999 5.26519 10.8 5V3C10.8 2.73478 10.6946 2.48044 10.5071 2.29291C10.3196 2.10537 10.0652 2 9.79999 2Z" fill="black" />
-
-
-                                            </svg>
-                                        </span>
-                                    </span>
-                                    <span class="menu-title" >Historique</span>
-                                    <span class="menu-arrow"></span>
-                                </span>
-                                <div class="menu-sub menu-sub-accordion " kt-hidden-height="507" style="">
-                                    <div class="">
-                                        <a class="menu-link" href="#">
-                                            <span class="menu-bullet">
-                                                <span class="bullet bullet-dot"></span>
-                                            </span>
-                                            <span class="menu-title">Historique ....</span>
-                                        </a>
-                                    </div>
-                                   
-                                </div>
-                                <div class="menu-sub menu-sub-accordion " kt-hidden-height="507" style="">
-                                    <div class="">
-                                        <a class="menu-link" href="#">
-                                            <span class="menu-bullet">
-                                                <span class="bullet bullet-dot"></span>
-                                            </span>
-                                            <span class="menu-title">Historique .....</span>
-                                        </a>
-                                    </div>
-                                   
-                                </div>
-                              
-                              
-                                
-                            </div>
+                        
                         </div>
                     </div>
                 </div>
@@ -504,20 +548,20 @@ $nomBL = $_GET['nomBL'];
                                                     </div>
                                                     <div class="d-flex flex-column">
                                                         <!-- <div class="fw-bolder d-flex align-items-center fs-5"><?php 
-                                                        // if (!empty(htmlspecialchars($_SESSION['tmpPrenom']))) {
-                                                        //                                                             echo ucwords(strtolower(htmlspecialchars($_SESSION['tmpPrenom']))) . ' ' . strtoupper(htmlspecialchars($_SESSION['tmpPrenom']));
-                                                        //                                                         } else {
-                                                        //                                                             echo "test";
-                                                        //                                                         } 
+                                                        if (!empty(htmlspecialchars($_SESSION['tmpPrenom']))) {
+                                                                                                                    echo ucwords(strtolower(htmlspecialchars($_SESSION['tmpPrenom']))) . ' ' . strtoupper(htmlspecialchars($_SESSION['tmpPrenom']));
+                                                                                                                } else {
+                                                                                                                    echo "test";
+                                                                                                                } 
                                                                                                                 ?>
 
                                                         </div> -->
                                                         <!-- <a href="#" class="fw-bold text-muted text-hover-primary fs-7"><?php
-                                                        //  if (!empty(htmlspecialchars($_SESSION['tmpEmail']))) {
-                                                        //                                                                     echo strtolower(htmlspecialchars($_SESSION['tmpEmail']));
-                                                        //                                                                 } else {
-                                                        //                                                                     echo "test@uahb.sn";
-                                                        //                                                                 } 
+                                                         if (!empty(htmlspecialchars($_SESSION['tmpEmail']))) {
+                                                                                                                            echo strtolower(htmlspecialchars($_SESSION['tmpEmail']));
+                                                                                                                        } else {
+                                                                                                                            echo "test@uahb.sn";
+                                                                                                                        } 
                                                                                                                         ?></a> -->
                                                     </div>
                                                 </div>
@@ -555,17 +599,146 @@ $nomBL = $_GET['nomBL'];
                         </div>
                     </div>
                 </div>
-<div class="container">
-    <form id="bonForm" method="post">
-        <a href='Liste_BL.php' class="btn-secondary">Retour</a><br><br>
-        <h1>Bon de Livraison: <?php echo '<b>' . $nomBL . '</b>'; ?></h1>
-        <div id="productList" class="product-list">
-            <h2>Produits</h2>
-            <!-- Les produits seront chargés ici via AJAX -->
-        </div>
-        <button type="button" class="btn btn-success" name="enregistrerTout" id="enregistrerTout">Enregistrer Tout</button>
-    </form>
-</div>
+
+                <input type="hidden" id="budgetId" value="<?= isset($budgetId) ? htmlspecialchars($budgetId) : '' ?>">
+
+                <div class="container bg-white shadow p-4 rounded">
+                <h3 class="text-success mb-4">
+                    Lignes de budget associées à la demande d'achat : 
+                    <strong><?= isset($titre) ? htmlspecialchars($titre) : '' ?></strong>
+                </h3>
+
+                <input type="hidden" id="nomExpression" value="<?= isset($titre) ? htmlspecialchars($titre) : '' ?>">
+
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <a href="liste_expressions.php" class="btn btn-retour">← Retour</a>
+                    <div id="datatable-search-wrapper" class="text-center flex-grow-1"></div>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-success" id="btnExporterPDF">🧾 Générer Demande de Proforma</button>
+                        <button class="btn btn-primary" id="btnPasserCommandes">🛒 Passer aux Commandes</button>
+                        <button class="btn btn-ajout" id="btnAjoutLigne">➕ Ajouter une ligne de budget</button>
+                    </div>
+                </div>
+
+                <table id="tableLignes" class="table table-bordered table-striped w-100 align-middle">
+                    <thead class="table-success">
+                        <tr>
+                            <th><input type="checkbox" id="checkAll"></th>
+                            <th>Désignation</th>
+                            <th>Quantité</th>
+                            <th>Quantité restante</th> <!-- ajout -->
+                            <th>Prix unitaire</th>
+                            <th>Montant</th>
+                            <th>Rubrique</th>
+                            <th>Sous-rubrique</th>
+                            <th>Description</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+                </div>
+
+                <!-- Modal Ajout Ligne Budget -->
+                <div class="modal fade" id="modalAjoutLigne" tabindex="-1" aria-labelledby="ajoutLigneLabel" aria-hidden="true">
+                <div class="modal-dialog modal-lg modal-dialog-centered">
+                    <div class="modal-content">
+                        <form id="formAjoutLigne">
+                            <div class="modal-header bg-success text-white">
+                                <h5 class="modal-title" id="ajoutLigneLabel">Ajouter une ligne de budget</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <input type="hidden" name="budget_id" id="ajout_budget_id">
+                                <div class="mb-3">
+                                    <label for="ajout_rubrique" class="form-label">Rubrique</label>
+                                    <select class="form-select" name="rubrique_id" id="ajout_rubrique" required>
+                                        <option value="">-- Choisir une rubrique --</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="ligne_budget_select" class="form-label">Ligne de budget</label>
+                                    <select class="form-select" name="ligne_id" id="ligne_budget_select" required>
+                                        <option value="">-- Choisir une ligne --</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="submit" class="btn btn-success">Ajouter</button>
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                </div>
+
+                <!-- Modal Prestataire -->
+                <div class="modal fade" id="modalPrestataire" tabindex="-1" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content">
+                            <div class="modal-header bg-success text-white">
+                                <h5 class="modal-title">Saisir le nom du prestataire</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <input type="text" id="nomPrestataire" class="form-control" placeholder="Nom du prestataire">
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" id="btnConfirmerPreforma" class="btn btn-success">Générer PDF</button>
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            
+                <!-- Modal sélection fournisseurs -->
+                <div class="modal fade" id="modalFournisseur" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                    <div class="modal-header bg-success text-white">
+                        <h5 class="modal-title">Choisir les fournisseurs</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <label for="listeFournisseurs">Fournisseurs :</label>
+                        <select id="listeFournisseurs" class="form-select" multiple required></select>
+                        <button class="btn btn-link text-success mt-2" id="btnNouveauFournisseur">➕ Nouveau fournisseur</button>
+                    </div>
+                    <div class="modal-footer">
+                        <button id="validerExportFournisseurs" class="btn btn-success">Exporter les préformas</button>
+                        <button class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    </div>
+                    </div>
+                </div>
+                </div>
+
+                <!-- Modal ajout fournisseur -->
+                <div class="modal fade" id="modalAjoutFournisseur" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                    <form id="formAjoutFournisseur">
+                        <div class="modal-header bg-success text-white">
+                        <h5 class="modal-title">Nouveau fournisseur</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                        <input type="text" class="form-control mb-2" name="nomF" placeholder="Nom" required>
+                        <input type="text" class="form-control mb-2" name="prenomF" placeholder="Prénom" required>
+                        <input type="text" class="form-control mb-2" name="entreprise" placeholder="Entreprise" required>
+                        <input type="text" class="form-control mb-2" name="adresseF" placeholder="Adresse" required>
+                        <input type="text" class="form-control mb-2" name="ville" placeholder="Ville" required>
+                        <input type="text" class="form-control mb-2" name="telF" placeholder="Téléphone" required>
+                        <input type="email" class="form-control mb-2" name="emailF" placeholder="Email" required>
+                        </div>
+                        <div class="modal-footer">
+                        <button type="submit" class="btn btn-success">Ajouter</button>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                        </div>
+                    </form>
+                    </div>
+                </div>
+                </div>
+
     <div class="footer py-4 d-flex flex-lg-column" id="kt_footer">
                     <div class="container-fluid d-flex flex-column flex-md-row align-items-center justify-content-between">
                         <div class="text-dark order-2 order-md-1">
@@ -586,30 +759,23 @@ $nomBL = $_GET['nomBL'];
 				</svg>
 			</span>
 		</div>
-            <!-- </div>
-        </div>
-    </div> -->
-
-
-    <div id="kt_scrolltop" class="scrolltop" data-kt-scrolltop="true">
-        <span class="svg-icon">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
-                <rect opacity="0.5" x="13" y="6" width="13" height="2" rx="1" transform="rotate(90 13 6)" fill="black"></rect>
-                <path d="M12.5657 8.56569L16.75 12.75C17.1642 13.1642 17.8358 13.1642 18.25 12.75C18.6642 12.3358 18.6642 11.6642 18.25 11.25L12.7071 5.70711C12.3166 5.31658 11.6834 5.31658 11.2929 5.70711L5.75 11.25C5.33579 11.6642 5.33579 12.3358 5.75 12.75C6.16421 13.1642 6.83579 13.1642 7.25 12.75L11.4343 8.56569C11.7467 8.25327 12.2533 8.25327 12.5657 8.56569Z" fill="black"></path>
-            </svg>
-        </span>
-    </div>
 
     <script src="../../ressources/dist_assets/plugins/global/plugins.bundle.js"></script>
     <script src="../../ressources/dist_assets/js/scripts.bundle.js"></script>
-    <script src="../../ressources/dist_assets/plugins/custom/fullcalendar/fullcalendar.bundle.js"></script>
-    <script src="../../ressources/dist_assets/js/custom/widgets.js"></script>
-    <script src="../../ressources/dist_assets/js/custom/apps/chat/chat.js"></script>
-    <script src="../../ressources/dist_assets/js/custom/modals/create-app.js"></script>
-    <script src="../../ressources/dist_assets/js/custom/modals/upgrade-plan.js"></script>
-                             
-    <script src="../../js/approvisionner.js"></script>
- 
-</body>
+    <script src="../../ressources/dist_assets/plugins/custom/datatables/datatables.bundle.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
+    <script src="../../js/voir_lignes_budget.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
 
+</body>
 </html>

@@ -315,8 +315,7 @@ $nomBL = $_GET["nomBL"];
                                         </a>
                                     </div>
                                    
-                                </div>
-                              
+                                </div> 
                                 
                             </div>
                             
@@ -683,7 +682,7 @@ $nomBL = $_GET["nomBL"];
                         </div>
                     </div>
                 </div>
-<form id="bonForm" method="post">
+    <form id="bonForm" method="post">
         
         <h1>Livraison: <?php echo '<b>' . $nomBL . '</b>'; ?></h1>
        
@@ -696,6 +695,7 @@ $nomBL = $_GET["nomBL"];
         <div id="productListNE"></div>
         <button type="button" class="btn btn-success" id="enregistrerTout">Enregistrer Tout</button>
     </form>
+    
     <div class="footer py-4 d-flex flex-lg-column" id="kt_footer">
                     <div class="container-fluid d-flex flex-column flex-md-row align-items-center justify-content-between">
                         <div class="text-dark order-2 order-md-1">

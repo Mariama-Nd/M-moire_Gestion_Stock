@@ -3,32 +3,33 @@ document.addEventListener('DOMContentLoaded', function () {
     const idBL = new URLSearchParams(window.location.search).get('idBL');
     const nomBL = new URLSearchParams(window.location.search).get('nomBL');
 
-    // Récupérer les produits enregistrés
     fetch(`../../controlleur/controlleur.php?option=30&idBL=${idBL}`)
         .then(response => response.json())
         .then(data => {
-            if (data.success) {
-                const productList = document.getElementById('productList');
-                data.products.forEach(product => {
-                    const productItem = document.createElement('div');
-                    productItem.className = 'product-item card mb-3 shadow-sm';
-                    productItem.dataset.idp = product.idP;
-                    productItem.innerHTML = `
-                        <span id="idPorduit${product.idP}" hidden="true">${product.idP}</span>
-                        <span id="idBLproduit${product.idP}" hidden="true">${idBL}</span>
-                        <span id="quantite_product${product.idP}" hidden="true">${product.quantite}</span>
-                        <span id="unite_product${product.idP}" hidden="true">${product.unite}</span>
-                        <span id="prix_product${product.idP}" hidden="true">${product.prix_unitaire}</span>
-                        <span id="reste${product.idP}" hidden="true">${product.reste}</span>
+            const productList = document.getElementById('productList');
+            if (!data.success || !Array.isArray(data.products)) {
+                productList.innerHTML = `<p>${data.message || 'Erreur chargement.'}</p>`;
+                return;
+            }
 
-                        <div class="product-card-body">
-                            <div class="product-info">
+            data.products.forEach(product => {
+                const productItem = document.createElement('div');
+                productItem.className = 'product-item card mb-3 shadow-sm';
+                productItem.dataset.idp = product.idP;
+                productItem.innerHTML = `
+                    <span id="idPorduit${product.idP}" hidden="true">${product.idP}</span>
+                    <span id="idBLproduit${product.idP}" hidden="true">${idBL}</span>
+                    <span id="quantite_product${product.idP}" hidden="true">${product.quantite || 0}</span>
+                    <span id="unite_product${product.idP}" hidden="true">${product.unite || ''}</span>
+                    <span id="reste${product.idP}" hidden="true">${product.reste}</span>
+
+                    <div class="product-card-body">
+                        <div class="product-info">
                             <div class="product-name">${product.nomproduit}</div>
                             <div class="product-meta">Reste : ${product.reste}</div>
-                            <div class="product-stock">(Stock actuel : ${product.Stock_actuel})</div>
-                            </div>
-
-                            <div class="product-fields">
+                            <div class="product-stock">(Stock actuel : ${product.Stock_actuel || 'N/A'})</div>
+                        </div>
+                        <div class="product-fields">
                             <div class="form-group">
                                 <label>Quantité</label>
                                 <input type="number" name="quantity[]" id="quantity${product.idP}" class="form-control" />
@@ -36,59 +37,47 @@ document.addEventListener('DOMContentLoaded', function () {
                             <div class="form-group">
                                 <label>Unité</label>
                                 <select name="unite[]" id="unite${product.idP}" class="form-control">
-                                <option value="">-- unité --</option>
-                                <option value="pièce" ${product.unite === 'pièce' ? 'selected' : ''}>pièce</option>
-                                <option value="boîte" ${product.unite === 'boîte' ? 'selected' : ''}>boîte</option>
-                                <option value="carton" ${product.unite === 'carton' ? 'selected' : ''}>carton</option>
+                                    <option value="">-- unité --</option>
+                                    <option value="pièce">pièce</option>
+                                    <option value="boîte">boîte</option>
+                                    <option value="carton">carton</option>
                                 </select>
                             </div>
-                            <div class="form-group">
-                                <label>Prix (CFA)</label>
-                                <input type="number" name="prix[]" id="prix${product.idP}" class="form-control" value="${product.prix_unitaire}" />
-                            </div>
-                            </div>
-
-                            <div class="product-actions">
+                        </div>
+                        <div class="product-actions">
                             <button type="button" class="btn btn-success btn-sm ${product.reste > 0 ? 'add' : 'modify'}">
                                 ${product.reste > 0 ? '➕ Enregistrer' : '✏️ Modifier'}
                             </button>
                             <button type="button" class="btn btn-danger btn-sm delete">Supprimer</button>
-                            </div>
                         </div>
-                        `;
-                    productList.appendChild(productItem);
-                });
-                addEventListeners();
-            } else {
-                const productList = document.getElementById('productList');
-                productList.innerHTML = `<p>${data.message}</p>`;
-            }
+                    </div>
+                `;
+                productList.appendChild(productItem);
+            });
+            addEventListeners();
         })
         .catch(error => {
-            console.error('Erreur lors de la récupération des produits enregistrés :', error);
+            console.error('Erreur chargement produits :', error);
         });
 
     function addEventListeners() {
         document.querySelectorAll('.modify').forEach(button => {
-            button.addEventListener('click', function () {
-                const productItem = button.closest('.product-item');
-                const idP = productItem.getAttribute('data-idp');
+            button.addEventListener('click', () => {
+                const idP = button.closest('.product-item').dataset.idp;
                 replaceProduct(idP);
             });
         });
 
         document.querySelectorAll('.add').forEach(button => {
-            button.addEventListener('click', function () {
-                const productItem = button.closest('.product-item');
-                const idP = productItem.getAttribute('data-idp');
+            button.addEventListener('click', () => {
+                const idP = button.closest('.product-item').dataset.idp;
                 addProduct(idP);
             });
         });
 
         document.querySelectorAll('.delete').forEach(button => {
-            button.addEventListener('click', function () {
-                const productItem = button.closest('.product-item');
-                const idP = productItem.getAttribute('data-idp');
+            button.addEventListener('click', () => {
+                const idP = button.closest('.product-item').dataset.idp;
                 const quantity = document.getElementById('quantity' + idP).value;
                 const unite = document.getElementById('unite' + idP).value;
                 deleteProduct(idP, quantity, unite);
@@ -96,247 +85,71 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    document.getElementById('enregistrerTout').addEventListener('click', function () {
-        const selectedProducts = [];
-        const quantities = [];
-        const prices = [];
-        const unites = [];
-        const invalidProducts = [];
-    
+    document.getElementById('enregistrerTout').addEventListener('click', () => {
+        const selectedProducts = [], quantities = [], unites = [], invalidProducts = [];
+
         document.querySelectorAll('.product-item').forEach(item => {
             const idP = item.dataset.idp;
-            const quantityInput = document.getElementById('quantity' + idP);
-            const prixInput = document.getElementById('prix' + idP);
-            const uniteInput = document.getElementById('unite' + idP);
-    
-            const quantity = parseFloat(quantityInput.value);
-            const prix = parseFloat(prixInput.value);
-            const unite = uniteInput.value;
-    
-            // Valeurs initiales
-            const initialQuantite = parseFloat(item.querySelector('#quantite_product' + idP)?.textContent || 0);
-            const initialPrix = parseFloat(item.querySelector('#prix_product' + idP)?.textContent || 0);
-            const initialUnite = item.querySelector('#unite_product' + idP)?.textContent || "";
-    
-            // Vérifier si une modification a été faite
-            const hasChanged = (
-                quantity !== initialQuantite ||
-                prix !== initialPrix ||
-                unite !== initialUnite
-            );
-    
-            if (hasChanged) {
-                if (isNaN(quantity) || quantity <= 0 || isNaN(prix) || prix <= 0 || !unite) {
-                    const nomProduit = item.querySelector('.card-title')?.textContent || 'Produit';
-                    invalidProducts.push(nomProduit);
-                } else {
-                    selectedProducts.push(idP);
-                    quantities.push(quantity);
-                    prices.push(prix);
-                    unites.push(unite);
-                }
+            const quantity = parseFloat(document.getElementById('quantity' + idP).value);
+            const unite = document.getElementById('unite' + idP).value;
+
+            if (!isNaN(quantity) && quantity > 0 && unite) {
+                selectedProducts.push(idP);
+                quantities.push(quantity);
+                unites.push(unite);
+            } else {
+                const nomProduit = item.querySelector('.product-name')?.textContent || 'Produit';
+                invalidProducts.push(nomProduit);
             }
         });
-    
+
         if (invalidProducts.length > 0) {
-            Swal.fire({
-                icon: 'warning',
-                title: 'Champs invalides',
-                html: `Veuillez corriger les champs suivants :<br><b>${invalidProducts.join(', ')}</b>`,
-            });
+            Swal.fire({ icon: 'warning', title: 'Champs invalides', html: invalidProducts.join(', ') });
             return;
         }
-    
-        if (selectedProducts.length === 0) {
-            Swal.fire({
-                icon: 'info',
-                title: 'Aucune modification détectée',
-                text: "Aucun produit n'a été modifié.",
-            });
-            return;
-        }
-    
+
         const formData = new FormData();
         formData.append('option', 33);
         formData.append('products', JSON.stringify(selectedProducts));
         formData.append('quantity', JSON.stringify(quantities));
-        formData.append('prix', JSON.stringify(prices));
         formData.append('unite', JSON.stringify(unites));
         formData.append('nomBL', nomBL);
         formData.append('idBC', idBC);
         formData.append('idBL', idBL);
         formData.append('enregistrerTout', true);
-    
-        fetch('../../controlleur/controlleur.php', {
-            method: 'POST',
-            body: formData
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Succès',
-                    text: 'Produits modifiés avec succès.',
-                }).then(() => {
-                    location.reload();
-                });
-            } else {
-                if (data.produitsIncoherents && data.produitsIncoherents.length > 0) {
-                    let message = "Incohérence de quantités pour les produits suivants :\n";
-                    data.produitsIncoherents.forEach(prod => {
-                        message += `${prod.nomProduit} (Quantité saisie: ${prod.quantiteSaisie}, Reste à livrer: ${prod.reste})\n`;
-                    });
-                    Swal.fire({ icon: 'warning', title: 'Attention', text: message });
+
+        fetch('../../controlleur/controlleur.php', { method: 'POST', body: formData })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    Swal.fire({ icon: 'success', title: 'Succès', text: 'Enregistrement réussi' }).then(() => location.reload());
                 } else {
-                    Swal.fire({ icon: 'error', title: 'Erreur', text: data.message || "Échec de l'enregistrement." });
+                    Swal.fire({ icon: 'error', title: 'Erreur', text: data.message || 'Echec' });
                 }
-            }
-        })
-        .catch(error => {
-            console.error("Erreur :", error);
-            Swal.fire({ icon: 'error', title: 'Erreur serveur', text: 'Erreur de connexion au serveur.' });
-        });
+            })
+            .catch(err => {
+                console.error('Erreur POST :', err);
+                Swal.fire({ icon: 'error', title: 'Erreur serveur' });
+            });
     });
-    
-    
-
-    function saveProduct(idP) {
-     
-        const productItem = document.querySelector(`.product-item[data-idp="${idP}"]`);
-        if (!productItem) {
-            console.error("Produit non trouvé pour l'ID: " + idP);
-            return;
-        }
-    
-      
-        const quantityInput = productItem.querySelector('input[type="number"]');
-        const prix = document.getElementById("prix" + idP).value.trim();
-        const unite = document.getElementById("unite" + idP).value.trim();
-        const quantity = quantityInput.value.trim();
-    
-    
-        if (!validateInputs(quantityInput, quantity, prix, unite)) {
-            return;
-        }
-    
-   
-        const formData = prepareFormData(idP, prix, quantity, unite);
-    
-     
-        sendProductData(formData);
-    }
-    
-
-    function validateInputs(quantityInput, quantity, prix, unite) {
-       
-        if (quantityInput.disabled || !quantity || isNaN(quantity) || parseFloat(quantity) <= 0) {
-            Swal.fire({
-                icon: 'warning',
-                title: 'Quantité invalide',
-                text: 'Veuillez entrer une quantité valide supérieure à 0.'
-            });
-            return false;
-        }
-    
-        
-        if (!prix || parseFloat(prix) <= 0) {
-            Swal.fire({
-                icon: 'warning',
-                title: 'Prix invalide',
-                text: 'Veuillez entrer un prix valide supérieur à 0.'
-            });
-            return false;
-        }
-    
-    
-        if (!unite) {
-            Swal.fire({
-                icon: 'warning',
-                title: 'Unité manquante',
-                text: 'Veuillez spécifier une unité.'
-            });
-            return false;
-        }
-    
-        return true;
-    }
-    
-    function prepareFormData(idP, prix, quantity, unite) {
-        const formData = new FormData();
-        formData.append('option', 23);
-        formData.append('idBL', idBL);
-        formData.append('idBC', idBC);
-        formData.append('idP', idP);
-        formData.append('prix', prix);
-        formData.append('quantity', parseFloat(quantity));
-        formData.append('unite', unite);
-        return formData;
-    }
-    
-    function sendProductData(formData) {
-     
-        Swal.fire({
-            title: 'Enregistrement en cours...',
-            allowOutsideClick: false,
-            didOpen: () => {
-                Swal.showLoading();
-            }
-        });
-    
-        fetch('../../controlleur/controlleur.php', {
-            method: 'POST',
-            body: formData
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Succès',
-                    text: 'Enregistrement réussi.',
-                    timer: 1500,
-                    showConfirmButton: false
-                }).then(() => {
-                    location.reload();
-                });
-            } else {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Erreur',
-                    text: data.message || "Échec de l'enregistrement."
-                });
-            }
-        })
-        .catch(error => {
-            console.error("Erreur :", error);
-            Swal.fire({
-                icon: 'error',
-                title: 'Erreur',
-                text: 'Erreur de connexion au serveur.'
-            });
-        });
-    }
 
     function addProduct(idP) {
         const quantity = parseFloat(document.getElementById("quantity" + idP).value);
-        const prix = parseFloat(document.getElementById("prix" + idP).value);
         const unite = document.getElementById("unite" + idP).value;
-
-        if (isNaN(quantity) || quantity <= 0 || isNaN(prix) || prix <= 0 || unite === '') {
-            Swal.fire({ icon: 'warning', title: 'Champs requis', text: 'Veuillez remplir correctement les champs.' });
+    
+        if (isNaN(quantity) || quantity <= 0) {
+            Swal.fire({ icon: 'warning', title: 'Champs requis', text: 'Veuillez remplir correctement la quantité.' });
             return;
         }
-
+    
         const formData = new FormData();
         formData.append('option', 25);
         formData.append('idBL', idBL);
         formData.append('idBC', idBC);
         formData.append('idP', idP);
         formData.append('quantity', quantity);
-        formData.append('prix', prix);
         formData.append('unite', unite);
-
+    
         fetch('../../controlleur/controlleur.php', {
             method: 'POST',
             body: formData
@@ -353,7 +166,7 @@ document.addEventListener('DOMContentLoaded', function () {
             console.error(err);
             Swal.fire({ icon: 'error', title: 'Erreur serveur', text: 'Impossible de traiter la requête.' });
         });
-    }
+    }    
 
     function replaceProduct(idP) {
         const quantity = parseFloat(document.getElementById("quantity" + idP).value);
@@ -371,7 +184,6 @@ document.addEventListener('DOMContentLoaded', function () {
         formData.append('idBC', idBC);
         formData.append('idP', idP);
         formData.append('quantity', quantity);
-        formData.append('prix', prix);
         formData.append('unite', unite);
         formData.append('mode', 'remplacement'); // pour indiquer au PHP que c’est une logique remplacement
 

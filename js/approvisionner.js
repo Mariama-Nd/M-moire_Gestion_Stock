@@ -18,21 +18,18 @@ document.addEventListener('DOMContentLoaded', function () {
                         <input type="checkbox" id="prod-${product.idP}" name="products[]" value="${product.idP}">
                         <label for="prod-${product.idP}" class="product-name"><b>${product.nomproduit} <br>
                             (Commander: ${product.quantite})</b></label>
-                            
+
                         <span id="quantite_cmd${product.idP}" hidden="true">${product.quantite}</span>
-                        <input type="number" name="quantity[]" min="0" id="${product.idP}" disabled placeholder="Quantite Recus">
+                        <input type="number" name="quantity[]" min="0" id="${product.idP}" disabled placeholder="Quantité Reçue">
 
-                        <label for="prod-${product.idP}"><b>Prix Unitaire (CFA)</b></label>
-                        <input type="number" name="prix[]" class="product-price" min="0" id="prix${product.idP}" disabled placeholder="Prix Produit">
-
-                        <label for="prod${product.idP}"><b>unité</b></label>
+                        <label for="prod${product.idP}"><b>Unité</b></label>
                         <select name="unite[]" class="product-unite" id="unite${product.idP}" disabled>
                             <option value="">-- unité --</option>
                             <option value="pièce">pièce</option>
                             <option value="carton">carton</option>
                             <option value="boîte">boîte</option>
                         </select>
-                        
+
                         <input type="hidden" name="idBL" value="${idBL}">
                         <button type="button" class="partielle-save" data-idp="${product.idP}">Enregistrer</button>
                     `;
@@ -43,16 +40,13 @@ document.addEventListener('DOMContentLoaded', function () {
                     checkbox.addEventListener('change', function () {
                         const productId = this.value;
                         const quantityInput = document.getElementById(productId);
-                        const priceInput = document.getElementById('prix' + productId);
                         const uniteInput = document.getElementById('unite' + productId);
 
                         if (this.checked) {
                             quantityInput.disabled = false;
-                            priceInput.disabled = false;
                             uniteInput.disabled = false;
                         } else {
                             quantityInput.disabled = true;
-                            priceInput.disabled = true;
                             uniteInput.disabled = true;
                         }
                     });
@@ -78,7 +72,6 @@ document.addEventListener('DOMContentLoaded', function () {
         const checkbox = productItem.querySelector('input[type="checkbox"]');
         const quantityInput = productItem.querySelector('input[type="number"]');
         const uniteInput = productItem.querySelector('select.product-unite');
-        const prix = document.getElementById('prix' + idP).value;
         let coherance_avec_Q_cmd = document.getElementById('quantite_cmd' + idP).innerText;
 
         if (!checkbox.checked) {
@@ -94,11 +87,6 @@ document.addEventListener('DOMContentLoaded', function () {
             return;
         }
 
-        if (prix.trim() <= 0) {
-            alert("Veuillez entrer un Prix valide.");
-            return;
-        }
-
         const formData = new FormData();
         formData.append('option', 23);
         formData.append('idBL', idBL);
@@ -106,7 +94,6 @@ document.addEventListener('DOMContentLoaded', function () {
         formData.append('idP', idP);
         formData.append('quantity', quantity);
         formData.append('unite', unite);
-        formData.append('prix', prix);
 
         fetch('../../controlleur/controlleur.php', {
             method: 'POST',
@@ -156,17 +143,14 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('enregistrerTout').addEventListener('click', function () {
         const selectedProducts = [];
         const quantities = [];
-        const price = [];
         const unites = [];
         const invalidProducts = [];
-        const invalidProducts_price = [];
 
         document.querySelectorAll('input[name="products[]"]:checked').forEach(checkbox => {
             const productId = checkbox.value;
             const quantityInput = checkbox.parentElement.querySelector('input[type="number"]');
             const quantity = quantityInput.value.trim();
             const productName = checkbox.parentElement.querySelector('.product-name').textContent;
-            const prix = checkbox.parentElement.querySelector('.product-price').value;
             const unitee = checkbox.parentElement.querySelector('.product-unite').value.trim();
 
             if (!quantity || isNaN(quantity) || parseFloat(quantity) <= 0) {
@@ -174,22 +158,12 @@ document.addEventListener('DOMContentLoaded', function () {
             } else {
                 selectedProducts.push(productId);
                 quantities.push(quantity);
-                price.push(prix);
                 unites.push(unitee);
-            }
-
-            if (!prix || isNaN(prix) || parseFloat(prix) <= 0) {
-                invalidProducts_price.push(productName);
             }
         });
 
         if (invalidProducts.length > 0) {
             alert("Veuillez entrer une Quantité valide pour les produits suivants :\n" + invalidProducts.join(', '));
-            return;
-        }
-
-        if (invalidProducts_price.length > 0) {
-            alert("Veuillez entrer un Prix valide pour les produits suivants :\n" + invalidProducts_price.join(', '));
             return;
         }
 
@@ -202,7 +176,6 @@ document.addEventListener('DOMContentLoaded', function () {
             products: selectedProducts,
             quantity: quantities,
             unite: unites,
-            prix: price,
             nomBL: nomBL,
             idBC: idBC,
             idBL: idBL,
@@ -243,14 +216,13 @@ document.addEventListener('DOMContentLoaded', function () {
         const uniteInput = productItem.querySelector('select.product-unite');
         const currentQuantity = quantityInput.value;
         const currentUnite = uniteInput.value;
-        const current_price = document.getElementById("prix" + idP).value;
         let coherance_avec_Q_cmd = document.getElementById('quantite_cmd' + idP).innerText;
 
-        if (currentQuantity === null || current_price == null) return;
+        if (currentQuantity === null) return;
 
-        if (currentQuantity.trim() === "" || current_price.trim() === "") {
+        if (currentQuantity.trim() === "") {
             Swal.fire({ icon: 'warning', title: 'Entrée invalide', text: 'Veuillez remplir tous les champs.' });
-        } else if (isNaN(currentQuantity) || parseFloat(currentQuantity) < 0 || isNaN(current_price) || parseFloat(current_price) < 0 || currentQuantity > coherance_avec_Q_cmd) {
+        } else if (isNaN(currentQuantity) || parseFloat(currentQuantity) < 0 || currentQuantity > coherance_avec_Q_cmd) {
             Swal.fire({ icon: 'warning', title: 'Quantité invalide', text: 'Veuillez entrer une valeur valide.' });
         } else {
             const formData = new FormData();
@@ -258,7 +230,6 @@ document.addEventListener('DOMContentLoaded', function () {
             formData.append('idBL', idBL);
             formData.append('idP', idP);
             formData.append('quantity', currentQuantity);
-            formData.append('prix', current_price);
             formData.append('unite', currentUnite);
 
             fetch('../../controlleur/controlleur.php', {
