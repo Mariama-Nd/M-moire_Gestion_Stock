@@ -227,181 +227,209 @@ $(document).ready(function () {
         }, 'json');
     });
 
-// ✅ Gestion commande achat "
+    // Gestion commande-achat
+    // ✅ Script JS embelli avec un style plus élégant, couleurs améliorées et navigation intuitive
 
-    $('#btnPasserCommandes').on('click', function () {
-        const lignesSelectionnees = [];
+$('#btnPasserCommandes').on('click', function () {
+    const lignesSelectionnees = [];
 
-        $('.check-ligne:checked').each(function () {
-            const row = table.row($(this).closest('tr')).data();
-            const idLigneBudget = $(this).data('id-ligne') || $(this).data('id_ligne');
-            const quantiteRestante = parseFloat($(this).data('quantite-restante') || 0);
+    $('.check-ligne:checked').each(function () {
+        const row = table.row($(this).closest('tr')).data();
+        const idLigneBudget = $(this).data('id-ligne') || $(this).data('id_ligne');
+        const quantiteRestante = parseFloat($(this).data('quantite-restante') || 0);
 
-            if (row && idLigneBudget && !isNaN(idLigneBudget) && parseInt(idLigneBudget) > 0) {
-                lignesSelectionnees.push({
-                    data: row,
-                    idLigneBudget: parseInt(idLigneBudget),
-                    quantiteRestante: quantiteRestante
-                });
-            }
+        if (row && idLigneBudget && !isNaN(idLigneBudget) && parseInt(idLigneBudget) > 0) {
+            lignesSelectionnees.push({
+                data: row,
+                idLigneBudget: parseInt(idLigneBudget),
+                quantiteRestante: quantiteRestante
+            });
+        }
+    });
+
+    if (lignesSelectionnees.length === 0) {
+        showAlert('warning', "Veuillez cocher au moins une ligne.");
+        return;
+    }
+
+    $.post("../../controlleur/controlleur.php", { option: 98 }, function (fournisseurs) {
+        const fournisseursValides = (Array.isArray(fournisseurs) ? fournisseurs : []).filter(f => {
+            const id = f.id_fournisseur || f.idF || f.id;
+            return id && !isNaN(id) && parseInt(id) > 0;
         });
 
-        if (lignesSelectionnees.length === 0) {
-            showAlert('warning', "Veuillez cocher au moins une ligne.");
+        if (fournisseursValides.length === 0) {
+            showAlert('error', "Aucun fournisseur avec ID valide trouvé.");
             return;
         }
 
-        $.post("../../controlleur/controlleur.php", { option: 98 }, function (fournisseurs) {
-            const fournisseursValides = (Array.isArray(fournisseurs) ? fournisseurs : []).filter(f => {
-                const id = f.id_fournisseur || f.idF || f.id;
-                return id && !isNaN(id) && parseInt(id) > 0;
-            });
+        const fournisseurOptions = fournisseursValides.map(f => {
+            const id = f.id_fournisseur || f.idF || f.id;
+            return `<option value="${id}">${f.nomF} ${f.prenomF} (${f.entreprise || 'N/A'})</option>`;
+        }).join("");
 
-            if (fournisseursValides.length === 0) {
-                showAlert('error', "Aucun fournisseur avec ID valide trouvé.");
-                return;
-            }
+        let stepsHTML = '';
 
-            const fournisseurOptions = fournisseursValides.map(f => {
-                const id = f.id_fournisseur || f.idF || f.id;
-                return `<option value="${id}">${f.nomF} ${f.prenomF} (${f.entreprise || 'N/A'})</option>`;
-            }).join("");
+        lignesSelectionnees.forEach((ligneObj, index) => {
+            const ligne = ligneObj.data;
+            const idLigneBudget = ligneObj.idLigneBudget;
+            const quantiteRestante = ligneObj.quantiteRestante;
 
-            const optionsReglement = ['Liquide', 'Chèque', 'Virement bancaire', 'Wave', 'Orange Money'];
-            const optionsModalite = ['Comptant à la livraison', 'Comptant avant livraison', 'Par tranche', '50%'];
-
-            let formHTML = `<form id="formCommande">`;
-
-            lignesSelectionnees.forEach((ligneObj, index) => {
-                const ligne = ligneObj.data;
-                const idLigneBudget = ligneObj.idLigneBudget;
-                const quantiteRestante = ligneObj.quantiteRestante;
-
-                const reglementOptionsHTML = optionsReglement.map(opt => `<option value="${opt}">${opt}</option>`).join('');
-                const modaliteOptionsHTML = optionsModalite.map(opt => `<option value="${opt}">${opt}</option>`).join('');
-
-                formHTML += `
-                    <hr>
-                    <p><strong>${ligne[1]}</strong> <br><small class="text-muted">Quantité restante : ${quantiteRestante}</small></p>
+            stepsHTML += `
+                <div class="commande-step p-3 rounded border shadow-sm" data-step="${index}" style="display: ${index === 0 ? 'block' : 'none'}; background-color: #f9f9fb;">
+                    <h5 class="text-center mb-3 text-primary fw-bold">● Étape ${index + 1} / ${lignesSelectionnees.length}</h5>
                     <input type="hidden" name="ligne_ids[]" value="${idLigneBudget}">
                     <input type="hidden" name="quantites_restantes[]" value="${quantiteRestante}">
 
-                    <div class="mb-2">
-                        <label>Fournisseur <span class="text-danger">*</span></label>
-                        <select name="fournisseurs[]" class="form-select" required>
+                    <p class="mb-3"><strong>${ligne[1]}</strong><br><small class="text-muted">Quantité restante : ${quantiteRestante}</small></p>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Fournisseur <span class="text-danger">*</span></label>
+                        <select name="fournisseurs[]" class="form-select border-primary" required>
                             <option value="">-- Choisir un fournisseur --</option>
                             ${fournisseurOptions}
                         </select>
                     </div>
-                    <div class="mb-2">
-                        <label>Quantité réelle <span class="text-danger">*</span></label>
-                        <input type="number" name="quantites[]" class="form-control" min="1" max="${quantiteRestante}" step="1" required>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Quantité réelle <span class="text-danger">*</span></label>
+                        <input type="number" name="quantites[]" class="form-control border-primary" min="1" max="${quantiteRestante}" step="1" required>
                     </div>
-                    <div class="mb-2">
-                        <label>Prix réel <span class="text-danger">*</span></label>
-                        <input type="number" name="prix[]" class="form-control" min="0" step="0.01" required>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Prix réel <span class="text-danger">*</span></label>
+                        <input type="number" name="prix[]" class="form-control border-primary" min="0" step="0.01" required>
                     </div>
-                    <div class="mb-2">
-                        <label>Mode de règlement <span class="text-danger">*</span></label>
-                        <select name="mode_reglement[]" class="form-select" required>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Mode de règlement <span class="text-danger">*</span></label>
+                        <select name="mode_reglement[]" class="form-select border-primary" required>
                             <option value="">-- Sélectionner --</option>
-                            ${reglementOptionsHTML}
+                            <option value="Liquide">Liquide</option>
+                            <option value="Chèque">Chèque</option>
+                            <option value="Virement bancaire">Virement bancaire</option>
+                            <option value="Wave">Wave</option>
+                            <option value="Orange Money">Orange Money</option>
                         </select>
                     </div>
-                    <div class="mb-2">
-                        <label>Modalité de paiement <span class="text-danger">*</span></label>
-                        <select name="modalite_paiement[]" class="form-select" required>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Modalité de paiement <span class="text-danger">*</span></label>
+                        <select name="modalite_paiement[]" class="form-select border-primary" required>
                             <option value="">-- Sélectionner --</option>
-                            ${modaliteOptionsHTML}
+                            <option value="Comptant à la livraison">Comptant à la livraison</option>
+                            <option value="Comptant avant livraison">Comptant avant livraison</option>
+                            <option value="Par tranche">Par tranche</option>
+                            <option value="50%">50%</option>
                         </select>
                     </div>
-                `;
-            });
+                </div>`;
+        });
 
-            formHTML += `</form>`;
+        const htmlForm = `<form id="formCommande">${stepsHTML}</form>
+            <div class="d-flex justify-content-between mt-4">
+                <button type="button" class="btn btn-outline-primary" id="btnPrevStep">⟵ Précédent</button>
+                <button type="button" class="btn btn-outline-primary" id="btnNextStep">Suivant ⟶</button>
+            </div>`;
 
-            Swal.fire({
-                title: 'Créer une commande',
-                html: formHTML,
-                showCancelButton: true,
-                confirmButtonText: 'Valider la commande',
-                cancelButtonText: 'Annuler',
-                focusConfirm: false,
-                width: '800px',
-                preConfirm: () => {
-                    const form = $('#formCommande');
-                    let erreurs = [];
+        let currentStep = 0;
 
-                    form.find('select[name="fournisseurs[]"]').each(function (i) {
-                        const val = $(this).val();
-                        if (!val || isNaN(val) || parseInt(val) <= 0) {
-                            erreurs.push(`Fournisseur manquant ou invalide pour la ligne ${i + 1}`);
-                        }
-                    });
+        Swal.fire({
+            title: 'Créer une commande',
+            html: htmlForm,
+            showCancelButton: true,
+            confirmButtonText: 'Valider la commande',
+            cancelButtonText: 'Annuler',
+            focusConfirm: false,
+            width: '850px',
+            didOpen: () => {
+                $('#btnPrevStep').on('click', function () {
+                    if (currentStep > 0) {
+                        $(`.commande-step[data-step="${currentStep}"]`).hide();
+                        currentStep--;
+                        $(`.commande-step[data-step="${currentStep}"]`).show();
+                    }
+                });
 
-                    form.find('input[name="quantites[]"]').each(function (i) {
-                        const val = parseFloat($(this).val());
-                        const max = parseFloat(form.find('input[name="quantites_restantes[]"]').eq(i).val());
-                        if (!val || isNaN(val) || val <= 0) {
-                            erreurs.push(`Quantité invalide ligne ${i + 1}`);
-                        } else if (val > max) {
-                            erreurs.push(`Quantité réelle (${val}) dépasse la quantité restante (${max}) pour la ligne ${i + 1}`);
-                        }
-                    });
+                $('#btnNextStep').on('click', function () {
+                    if (currentStep < lignesSelectionnees.length - 1) {
+                        $(`.commande-step[data-step="${currentStep}"]`).hide();
+                        currentStep++;
+                        $(`.commande-step[data-step="${currentStep}"]`).show();
+                    }
+                });
+            },
+            preConfirm: () => {
+                const form = $('#formCommande');
+                const erreurs = [];
 
-                    form.find('input[name="prix[]"]').each(function (i) {
-                        const val = $(this).val();
-                        if (!val || isNaN(val) || parseFloat(val) < 0) {
-                            erreurs.push(`Prix invalide ligne ${i + 1}`);
-                        }
-                    });
+                form.find('.commande-step').each(function (index) {
+                    const ligneNum = index + 1;
 
-                    form.find('select[name="mode_reglement[]"]').each(function (i) {
-                        if (!$(this).val()) {
-                            erreurs.push(`Mode de règlement manquant ligne ${i + 1}`);
-                        }
-                    });
+                    const fournisseur = $(this).find('select[name="fournisseurs[]"]').val();
+                    const quantiteStr = $(this).find('input[name="quantites[]"]').val();
+                    const prixStr = $(this).find('input[name="prix[]"]').val();
+                    const quantiteMax = parseFloat($(this).find('input[name="quantites_restantes[]"]').val());
+                    const modeReglement = $(this).find('select[name="mode_reglement[]"]').val();
+                    const modalitePaiement = $(this).find('select[name="modalite_paiement[]"]').val();
 
-                    form.find('select[name="modalite_paiement[]"]').each(function (i) {
-                        if (!$(this).val()) {
-                            erreurs.push(`Modalité de paiement manquante ligne ${i + 1}`);
-                        }
-                    });
-
-                    if (erreurs.length > 0) {
-                        Swal.showValidationMessage(erreurs.join('<br>'));
-                        return false;
+                    if (!fournisseur || isNaN(fournisseur) || parseInt(fournisseur) <= 0) {
+                        erreurs.push(`Fournisseur manquant ou invalide pour la ligne ${ligneNum}`);
                     }
 
-                    const data = form.serialize() + '&option=100';
+                    if (!quantiteStr || isNaN(quantiteStr) || parseFloat(quantiteStr) <= 0) {
+                        erreurs.push(`Quantité réelle vide ou invalide pour la ligne ${ligneNum}`);
+                    } else if (parseFloat(quantiteStr) > quantiteMax) {
+                        erreurs.push(`Quantité réelle (${quantiteStr}) dépasse la quantité restante (${quantiteMax}) pour la ligne ${ligneNum}`);
+                    }
 
-                    return fetch("../../controlleur/controlleur.php", {
-                        method: "POST",
-                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                        body: data
-                    })
-                        .then(res => res.json())
-                        .then(json => {
-                            if (!json.success) {
-                                Swal.showValidationMessage(json.message || "Erreur serveur.");
-                                return false;
-                            }
-                            return json;
-                        })
-                        .catch(error => {
-                            Swal.showValidationMessage("Erreur réseau : " + error);
-                            return false;
-                        });
+                    if (!prixStr || isNaN(prixStr) || parseFloat(prixStr) < 0) {
+                        erreurs.push(`Prix réel vide ou invalide pour la ligne ${ligneNum}`);
+                    }
+
+                    if (!modeReglement) {
+                        erreurs.push(`Mode de règlement manquant pour la ligne ${ligneNum}`);
+                    }
+
+                    if (!modalitePaiement) {
+                        erreurs.push(`Modalité de paiement manquante pour la ligne ${ligneNum}`);
+                    }
+                });
+
+                if (erreurs.length > 0) {
+                    Swal.showValidationMessage(erreurs.join('<br>'));
+                    return false;
                 }
-            }).then(result => {
-                if (result.isConfirmed && result.value && result.value.success) {
-                    showAlert('success', result.value.message || "Commande enregistrée avec succès !");
-                    chargerLignes();
-                }
-            });
-        }, 'json').fail(function (xhr, status, error) {
-            showAlert('error', "Impossible de charger les fournisseurs.");
+
+                const data = form.serialize() + '&option=100';
+
+                return fetch("../../controlleur/controlleur.php", {
+                    method: "POST",
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: data
+                })
+                .then(res => res.json())
+                .then(json => {
+                    if (!json.success) {
+                        Swal.showValidationMessage(json.message || "Erreur serveur.");
+                        return false;
+                    }
+                    return json;
+                })
+                .catch(error => {
+                    Swal.showValidationMessage("Erreur réseau : " + error);
+                    return false;
+                });
+            }
+        }).then(result => {
+            if (result.isConfirmed && result.value && result.value.success) {
+                showAlert('success', result.value.message || "Commande enregistrée avec succès !");
+                chargerLignes();
+            }
         });
+    }, 'json').fail(function () {
+        showAlert('error', "Impossible de charger les fournisseurs.");
     });
+});
                             
 });
