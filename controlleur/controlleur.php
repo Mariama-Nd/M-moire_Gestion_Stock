@@ -819,105 +819,126 @@ echo json_encode($result);
                                                                                 
                                         case 24: 
                                             if (isset($_GET["idBC"]) && isset($_GET["idBL"])) {
-                                                
-
                                                 $idBC = $_GET["idBC"];
                                                 $idBL = $_GET["idBL"];
-
+                                        
                                                 try {
                                                     $stmt = $gc->getDb()->prepare('
-                                                        SELECT DISTINCT p.idP, p.nomproduit, bcp.idbc, bcp.quantite,bcp.unite
+                                                        SELECT 
+                                                            p.idP,
+                                                            p.nomproduit,
+                                                            bcp.idbc,
+                                                            bcp.quantite,
+                                                            bcp.unite,
+                                                            COALESCE((
+                                                                SELECT SUM(blp.quantite)
+                                                                FROM bon_livraison_produit blp
+                                                                WHERE blp.idP = bcp.idP AND blp.idBL = :idBL
+                                                            ), 0) AS quantite_livree
                                                         FROM bon_commande_produit bcp
                                                         JOIN product p ON bcp.idP = p.idP
                                                         JOIN bon_livraison bl ON bl.id_bc = bcp.idbc
-                                                        WHERE bcp.idbc = :idBC and bl.idBL = :idBL
+                                                        WHERE bcp.idbc = :idBC AND bl.idBL = :idBL
                                                     ');
                                                     $stmt->execute(['idBC' => $idBC, 'idBL' => $idBL]);
                                                     $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
-                                                                                                                                
-                                                        echo json_encode(["status" => "success", "products" => $products]);
-                                                    } catch (PDOException $e) {
-                                                        echo json_encode(["status" => "error", "message" => "Erreur : " . $e->getMessage()]);
-                                                    }
-                                                } else {
-                                                    echo json_encode(["status" => "error", "message" => "Données manquantes."]);
+                                        
+                                                    echo json_encode(["status" => "success", "products" => $products]);
+                                                } catch (PDOException $e) {
+                                                    echo json_encode(["status" => "error", "message" => "Erreur : " . $e->getMessage()]);
                                                 }
-                                                break;
+                                            } else {
+                                                echo json_encode(["status" => "error", "message" => "Données manquantes."]);
+                                            }
+                                            break;                                        
 
-
-                                                case 25: 
-                                                    if (!isset($_POST['idBL'], $_POST['idBC'], $_POST['idP'], $_POST['quantity'], $_POST['unite'])) {
-                                                        echo json_encode(['success' => false, 'message' => 'Les données nécessaires ne sont pas fournies.']);
+                                            case 25:
+                                                if (!isset($_POST['idBL'], $_POST['idBC'], $_POST['idP'], $_POST['quantity'], $_POST['unite'])) {
+                                                    echo json_encode(['success' => false, 'message' => 'Données manquantes.']);
+                                                    exit;
+                                                }
+                                            
+                                                $idBL = $_POST['idBL'];
+                                                $idBC = $_POST['idBC'];
+                                                $idP = $_POST['idP'];
+                                                $quantityInput = floatval($_POST['quantity']);
+                                                $unite = $_POST['unite'];
+                                                $mode = $_POST['mode'] ?? 'cumulatif'; // par défaut
+                                            
+                                                try {
+                                                    // Quantité commandée
+                                                    $stmtBC = $gc->getDb()->prepare("SELECT quantite FROM bon_commande_produit WHERE idP = :idP AND idbc = :idBC");
+                                                    $stmtBC->execute([':idP' => $idP, ':idBC' => $idBC]);
+                                                    $rowBC = $stmtBC->fetch(PDO::FETCH_ASSOC);
+                                            
+                                                    if (!$rowBC) {
+                                                        echo json_encode(['success' => false, 'message' => 'Produit non trouvé dans le bon de commande.']);
                                                         exit;
                                                     }
-                                                
-                                                    $idBL = $_POST['idBL'];
-                                                    $idBC = $_POST['idBC'];
-                                                    $idP = $_POST['idP'];
-                                                    $quantityInput = floatval($_POST['quantity']);
-                                                    $unite = $_POST['unite'];
-                                                    $mode = $_POST['mode'] ?? 'cumulatif';
-                                                
-                                                    try {
-                                                        $sql_date = "SELECT dateadd, quantite FROM bon_livraison_produit WHERE idP = :idP AND idBL = :idBL";
-                                                        $stmt = $gc->getDb()->prepare($sql_date);
-                                                        $stmt->execute([':idP' => $idP, ':idBL' => $idBL]);
-                                                        $row = $stmt->fetch(PDO::FETCH_ASSOC);
-                                                
-                                                        if (!$row) {
-                                                            echo json_encode(['success' => false, 'message' => 'Produit non trouvé dans le bon de livraison.']);
-                                                            exit;
-                                                        }
-                                                
-                                                        $date = $row['dateadd'];
-                                                        $quantite_deja_livree = floatval($row['quantite']);
-                                                
-                                                        $sql_bc = "SELECT quantite FROM bon_commande_produit WHERE idP = :idP AND idbc = :idBC";
-                                                        $stmt = $gc->getDb()->prepare($sql_bc);
-                                                        $stmt->execute([':idP' => $idP, ':idBC' => $idBC]);
-                                                        $row_bc = $stmt->fetch(PDO::FETCH_ASSOC);
-                                                
-                                                        if (!$row_bc) {
-                                                            echo json_encode(['success' => false, 'message' => 'Produit non trouvé dans le bon de commande.']);
-                                                            exit;
-                                                        }
-                                                
-                                                        $quantite_commandee = floatval($row_bc['quantite']);
-                                                
+                                            
+                                                    $quantite_commandee = floatval($rowBC['quantite']);
+                                            
+                                                    // Vérifier si déjà livré
+                                                    $stmtBLP = $gc->getDb()->prepare("SELECT quantite FROM bon_livraison_produit WHERE idP = :idP AND idBL = :idBL");
+                                                    $stmtBLP->execute([':idP' => $idP, ':idBL' => $idBL]);
+                                                    $rowBLP = $stmtBLP->fetch(PDO::FETCH_ASSOC);
+                                            
+                                                    if ($rowBLP) {
+                                                        // Produit déjà livré → UPDATE
+                                                        $quantite_deja_livree = floatval($rowBLP['quantite']);
+                                            
                                                         if ($mode === 'remplacement') {
                                                             if ($quantityInput > $quantite_commandee) {
-                                                                echo json_encode(['success' => false, 'message' => "Quantité invalide. Elle dépasse la quantité commandée ($quantite_commandee)."]);
+                                                                echo json_encode(['success' => false, 'message' => "Quantité invalide (max : $quantite_commandee)."]);
                                                                 exit;
                                                             }
-                                                            $quantite_a_enregistrer = $quantityInput;
+                                                            $quantite_finale = $quantityInput;
                                                         } else {
-                                                            $quantite_totale = $quantite_deja_livree + $quantityInput;
-                                                            if ($quantite_totale > $quantite_commandee) {
+                                                            $quantite_finale = $quantite_deja_livree + $quantityInput;
+                                                            if ($quantite_finale > $quantite_commandee) {
                                                                 $reste = $quantite_commandee - $quantite_deja_livree;
-                                                                echo json_encode(['success' => false, 'message' => "Quantité invalide. Vous ne pouvez ajouter que $reste unité(s) au maximum."]);
+                                                                echo json_encode(['success' => false, 'message' => "Trop élevé. Vous pouvez ajouter au maximum $reste unité(s)."]);
                                                                 exit;
                                                             }
-                                                            $quantite_a_enregistrer = $quantite_totale;
                                                         }
-                                                
-                                                        $sql_update = "UPDATE bon_livraison_produit 
-                                                                       SET quantite = :quantite, unite = :unite 
-                                                                       WHERE idBL = :idBL AND idP = :idP AND dateadd = :dateadd";
-                                                        $stmt = $gc->getDb()->prepare($sql_update);
-                                                        $stmt->execute([
-                                                            ':quantite' => $quantite_a_enregistrer,
+                                            
+                                                        $stmtUpdate = $gc->getDb()->prepare("
+                                                            UPDATE bon_livraison_produit 
+                                                            SET quantite = :quantite, unite = :unite, dateadd = NOW()
+                                                            WHERE idBL = :idBL AND idP = :idP
+                                                        ");
+                                                        $stmtUpdate->execute([
+                                                            ':quantite' => $quantite_finale,
                                                             ':unite' => $unite,
                                                             ':idBL' => $idBL,
-                                                            ':idP' => $idP,
-                                                            ':dateadd' => $date
+                                                            ':idP' => $idP
                                                         ]);
-                                                
-                                                        echo json_encode(['success' => true]);
-                                                
-                                                    } catch (PDOException $e) {
-                                                        echo json_encode(['success' => false, 'message' => 'Erreur PDO : ' . $e->getMessage()]);
+                                                    } else {
+                                                        // Première livraison → INSERT
+                                                        if ($quantityInput > $quantite_commandee) {
+                                                            echo json_encode(['success' => false, 'message' => "Quantité invalide. Elle dépasse la quantité commandée ($quantite_commandee)."]);
+                                                            exit;
+                                                        }
+                                            
+                                                        $stmtInsert = $gc->getDb()->prepare("
+                                                            INSERT INTO bon_livraison_produit (idBL, idP, quantite, unite, dateadd)
+                                                            VALUES (:idBL, :idP, :quantite, :unite, NOW())
+                                                        ");
+                                                        $stmtInsert->execute([
+                                                            ':idBL' => $idBL,
+                                                            ':idP' => $idP,
+                                                            ':quantite' => $quantityInput,
+                                                            ':unite' => $unite
+                                                        ]);
                                                     }
-                                                    break;                                                                  
+                                            
+                                                    echo json_encode(['success' => true]);
+                                            
+                                                } catch (PDOException $e) {
+                                                    echo json_encode(['success' => false, 'message' => 'Erreur PDO : ' . $e->getMessage()]);
+                                                }
+                                            
+                                                break;                                                                                                                                                          
         
             case 26: // Gérer le retrait d’un produit du bon de livraison (sans toucher au stock produit)
                 $idBL = $_GET['idBL'];
@@ -949,9 +970,7 @@ echo json_encode($result);
                     echo json_encode(['success' => false, 'message' => $e->getMessage()]);
                 }
                 break;
-               
-
-
+                
                 case 27:
                     try {
                         $input = json_decode(file_get_contents('php://input'), true);
@@ -968,9 +987,6 @@ echo json_encode($result);
                             $dateT = new DateTime();
                             $date = $dateT->format("Y-m-d H:i:s");
                 
-                            if (empty($idBL)) throw new Exception("ID du bon de livraison manquant.");
-                            if (empty($idP) || !is_array($idP) || empty($quantite)) throw new Exception("Données d'entrée invalides");
-                
                             $produitsIncoherents = [];
                 
                             foreach ($idP as $i => $id) {
@@ -980,30 +996,44 @@ echo json_encode($result);
                 
                                 $stmt = $gc->getDb()->prepare("SELECT quantite FROM bon_livraison_produit WHERE idP = :idP AND idBL = :idBL");
                                 $stmt->execute([':idP' => $id, ':idBL' => $idBL]);
-                                $qte_bl = $stmt->fetchColumn() ?? 0;
+                                $qte_bl = floatval($stmt->fetchColumn() ?? 0);
                 
                                 $stmt = $gc->getDb()->prepare("SELECT quantite FROM bon_commande_produit WHERE idP = :idP AND idBC = :idBC");
                                 $stmt->execute([':idP' => $id, ':idBC' => $idBC]);
-                                $qte_bc = $stmt->fetchColumn() ?? 0;
+                                $qte_bc = floatval($stmt->fetchColumn() ?? 0);
                 
                                 $reste = $qte_bc - $qte_bl;
+                                $qte_saisie = floatval($quantite[$i]);
                 
-                                if ($quantite[$i] > $reste && $qte_bl == 0) {
+                                if ($qte_saisie > $reste) {
                                     $produitsIncoherents[] = [
                                         'nomProduit' => $nomProduit,
-                                        'quantiteSaisie' => $quantite[$i],
+                                        'quantiteSaisie' => $qte_saisie,
                                         'reste' => $reste
                                     ];
-                                } else if ($qte_bl == 0) {
+                                    continue;
+                                }
+                
+                                if ($qte_bl == 0) {
                                     $sql = "INSERT INTO bon_livraison_produit (idBL, idP, quantite, unite, dateadd)
                                             VALUES (:idBL, :idP, :quantite, :unite, :dateadd)";
                                     $stmt = $gc->getDb()->prepare($sql);
                                     $stmt->execute([
                                         ':idBL' => $idBL,
                                         ':idP' => $id,
-                                        ':quantite' => $quantite[$i],
+                                        ':quantite' => $qte_saisie,
                                         ':unite' => $unites[$i],
                                         ':dateadd' => $date
+                                    ]);
+                                } else {
+                                    $sql = "UPDATE bon_livraison_produit SET quantite = quantite + :quantite, unite = :unite 
+                                            WHERE idBL = :idBL AND idP = :idP";
+                                    $stmt = $gc->getDb()->prepare($sql);
+                                    $stmt->execute([
+                                        ':quantite' => $qte_saisie,
+                                        ':unite' => $unites[$i],
+                                        ':idBL' => $idBL,
+                                        ':idP' => $id
                                     ]);
                                 }
                             }
@@ -1018,12 +1048,10 @@ echo json_encode($result);
                 
                             echo json_encode(['success' => true]);
                         }
-                
                     } catch (PDOException $e) {
                         echo json_encode(['success' => false, 'message' => "Erreur PDO : " . $e->getMessage()]);
                     }
-                    break;                
-
+                    break;                                
 
         case 28: // Nouveau case pour gérer la consultation des informations du bon de livraison
             try {
@@ -1108,47 +1136,66 @@ case 29: //Valider livraison en mettant à jour le stock
                 echo json_encode(['success' => false, 'message' => 'ID du bon de livraison manquant.']);
                 exit;
             }
-
+    
             $idBL = $_GET['idBL'];
-
-            $r = "SELECT 
-    DISTINCT blp.idP, 
-    blp.quantite, 
-    blp.idBL, 
-    bcp.idbc, 
-    p.nomproduit, 
-    blp.prix_unitaire,
-    blp.unite
-FROM 
-    bon_livraison_produit blp
-INNER JOIN 
-    product p ON blp.idP = p.idP
-INNER JOIN 
-    bon_commande_produit bcp ON blp.idP = bcp.idP
-INNER JOIN 
-    bon_livraison bl ON bl.idBL = blp.idBL
-INNER JOIN 
-    bon_commande bc ON bc.id_BC = bl.id_bc
-WHERE 
-    blp.idBL = :idBL and bcp.idbc = bc.id_BC
-
-"; 
-            $requette =  $gc->getDb()->prepare($r);
-            $requette->execute([':idBL' => $idBL]);
-            $reponse = $requette->fetchAll(PDO::FETCH_ASSOC);
-
-            if (empty($reponse)) {
-                echo json_encode(['success' => false, 'message' => 'Aucun produit trouvé.']);
-            } else {
-                foreach ($reponse as &$ventes) {
-                    $ventes['reste'] = reste($ventes['idP'], $idBL, $ventes['idbc'],  $gc->getDb());
-                }
-                echo json_encode(['success' => true, 'products' => $reponse]);
+    
+            // Récupération du bon de commande lié
+            $stmtBC = $gc->getDb()->prepare("SELECT id_bc FROM bon_livraison WHERE idBL = :idBL");
+            $stmtBC->execute([':idBL' => $idBL]);
+            $idBC = $stmtBC->fetchColumn();
+    
+            if (!$idBC) {
+                echo json_encode(['success' => false, 'message' => 'Bon de commande introuvable.']);
+                exit;
             }
+    
+            // Tous les produits du BC, livrés ou non
+            $sql = "
+                SELECT 
+                    p.idP,
+                    p.nomproduit,
+                    bcp.quantite AS quantite_commandee,
+                    IFNULL(blp.quantite, 0) AS quantite_deja_livree,
+                    IFNULL(blp.unite, '') AS unite,
+                    IFNULL(blp.dateadd, '') AS date_livraison,
+                    CASE WHEN blp.idBL IS NOT NULL THEN 1 ELSE 0 END AS dejaLivre,
+                    IFNULL(p.Stock_actuel, 0) AS Stock_actuel
+                FROM bon_commande_produit bcp
+                JOIN product p ON p.idP = bcp.idP
+                LEFT JOIN bon_livraison_produit blp 
+                    ON blp.idP = bcp.idP AND blp.idBL = :idBL
+                WHERE bcp.idBC = :idBC
+            ";
+    
+            $stmt = $gc->getDb()->prepare($sql);
+            $stmt->execute([':idBL' => $idBL, ':idBC' => $idBC]);
+    
+            $products = [];
+            while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+                $qte_commandee = floatval($row['quantite_commandee']);
+                $qte_livree    = floatval($row['quantite_deja_livree']);
+                $reste         = $qte_commandee - $qte_livree;
+    
+                $products[] = [
+                    'idP' => $row['idP'],
+                    'nomproduit' => $row['nomproduit'],
+                    'quantite_commandee' => $qte_commandee,
+                    'quantite_deja_livree' => $qte_livree,
+                    'reste' => $reste,
+                    'unite' => $row['unite'],
+                    'date_livraison' => $row['date_livraison'],
+                    'dejaLivre' => (bool)$row['dejaLivre'],
+                    'Stock_actuel' => $row['Stock_actuel'],
+                ];
+            }
+    
+            echo json_encode(['success' => true, 'products' => $products]);
+    
         } catch (PDOException $e) {
-            echo json_encode(['success' => false, 'message' => "Erreur PDO : " . $e->getMessage()]);
+            echo json_encode(['success' => false, 'message' => 'Erreur PDO : ' . $e->getMessage()]);
         }
-        break;
+        break;    
+    
         case 31: // Nouveau case pour récupérer les autres produits du bon de commande
             try {
                 if (empty($_GET['idBL'])) {
@@ -1215,115 +1262,98 @@ WHERE
 
                 case 33:
                     try {
-                        if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['enregistrerTout'])) {
-                            $idP = json_decode($_POST['products'], true);
-                            $quantite = json_decode($_POST['quantity'], true);
-                            $unites = json_decode($_POST['unite'], true);
-                            $idBL = $_POST['idBL'] ?? $_SESSION["idBL"];
-                            $idBC = $_POST["idBC"];
-                            $nomBL = $_POST["nomBL"] ?? 'Nom par défaut';
+                        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+                            $data = json_decode(file_get_contents("php://input"), true);
+                
+                            $idP      = $data['produits'] ?? [];
+                            $quantite = $data['quantites'] ?? [];
+                            $unites   = $data['unites'] ?? [];
+                            $idBL     = $data['idBL'] ?? $_SESSION["idBL"];
+                            $idBC     = $data['idBC'] ?? null;
                 
                             date_default_timezone_set('Africa/Dakar');
-                            $dateT = new DateTime();
-                            $date = $dateT->format("Y-m-d H:i:s");
+                            $date = (new DateTime())->format("Y-m-d H:i:s");
                 
                             if (empty($idBL)) throw new Exception("ID du bon de livraison manquant.");
                             if (empty($idP) || !is_array($idP) || empty($quantite) || !is_array($quantite)) {
-                                throw new Exception("Données d'entrée invalides");
+                                throw new Exception("Données d'entrée invalides.");
                             }
                 
                             $produitsIncoherents = [];
                 
                             foreach ($idP as $i => $id) {
-                                $qte_saisie = floatval($quantite[$i]);
-                                $unite_saisie = $unites[$i] ?? '';
+                                $qte_saisie = floatval($quantite[$i] ?? 0);
+                                $unite_saisie = trim($unites[$i] ?? '');
                 
                                 // Récupérer le nom du produit
                                 $stmtNom = $gc->getDb()->prepare("SELECT nomproduit FROM product WHERE idP = :idP");
                                 $stmtNom->execute([':idP' => $id]);
-                                $nomProduit = $stmtNom->fetchColumn() ?? 'Nom inconnu';
+                                $nomProduit = $stmtNom->fetchColumn() ?? "Produit ID $id";
                 
-                                // Récupérer la quantité déjà livrée pour ce produit dans ce BL
-                                $stmtLiv = $gc->getDb()->prepare("SELECT quantite, dateadd FROM bon_livraison_produit WHERE idP = :idP AND idBL = :idBL");
-                                $stmtLiv->execute([':idP' => $id, ':idBL' => $idBL]);
-                                $livraison = $stmtLiv->fetch(PDO::FETCH_ASSOC);
-                                $qte_bl = $livraison['quantite'] ?? 0;
-                                $dateadd = $livraison['dateadd'] ?? $date;
-                
-                                // Récupérer la quantité du bon de commande
+                                // Quantité commandée
                                 $stmtCmd = $gc->getDb()->prepare("SELECT quantite FROM bon_commande_produit WHERE idP = :idP AND idBC = :idBC");
                                 $stmtCmd->execute([':idP' => $id, ':idBC' => $idBC]);
                                 $qte_bc = $stmtCmd->fetchColumn() ?? 0;
                 
-                                $reste = $qte_bc - $qte_bl;
+                                // Livraison existante ?
+                                $stmtLiv = $gc->getDb()->prepare("SELECT quantite, dateadd FROM bon_livraison_produit WHERE idP = :idP AND idBL = :idBL");
+                                $stmtLiv->execute([':idP' => $id, ':idBL' => $idBL]);
+                                $livraison = $stmtLiv->fetch(PDO::FETCH_ASSOC);
+                                $dateadd = $livraison['dateadd'] ?? $date;
                 
-                                // Vérification des champs
-                                if ($qte_saisie <= 0 || $unite_saisie === '') {
+                                // Vérifications
+                                if ($qte_saisie <= 0) {
                                     $produitsIncoherents[] = [
-                                        'nomProduit' => $nomProduit,
-                                        'quantiteSaisie' => $qte_saisie,
-                                        'reste' => $reste
+                                        'produit' => $nomProduit,
+                                        'champ'   => 'Quantité',
+                                        'erreur'  => 'Valeur vide ou ≤ 0'
                                     ];
                                     continue;
                                 }
                 
-                                // Si le produit n'a pas encore été enregistré dans ce BL
-                                if (!$livraison) {
-                                    if ($qte_saisie > $qte_bc) {
-                                        $produitsIncoherents[] = [
-                                            'nomProduit' => $nomProduit,
-                                            'quantiteSaisie' => $qte_saisie,
-                                            'reste' => $qte_bc
-                                        ];
-                                        continue;
-                                    }
+                                if ($unite_saisie === '') {
+                                    $produitsIncoherents[] = [
+                                        'produit' => $nomProduit,
+                                        'champ'   => 'Unité',
+                                        'erreur'  => 'Non sélectionnée'
+                                    ];
+                                    continue;
+                                }
                 
+                                if ($qte_saisie > $qte_bc) {
+                                    $produitsIncoherents[] = [
+                                        'produit' => $nomProduit,
+                                        'champ'   => 'Quantité',
+                                        'erreur'  => "Dépassement de la quantité commandée ($qte_bc)"
+                                    ];
+                                    continue;
+                                }
+                
+                                // Enregistrement (remplacement pur)
+                                if (!$livraison) {
                                     $stmtInsert = $gc->getDb()->prepare("
                                         INSERT INTO bon_livraison_produit (idBL, idP, quantite, unite, dateadd)
                                         VALUES (:idBL, :idP, :quantite, :unite, :dateadd)
                                     ");
                                     $stmtInsert->execute([
-                                        ':idBL' => $idBL,
-                                        ':idP' => $id,
+                                        ':idBL'     => $idBL,
+                                        ':idP'      => $id,
                                         ':quantite' => $qte_saisie,
-                                        ':unite' => $unite_saisie,
-                                        ':dateadd' => $date
+                                        ':unite'    => $unite_saisie,
+                                        ':dateadd'  => $date
                                     ]);
                                 } else {
-                                    // Produit déjà enregistré → cumul ou remplacement
-                                    if ($reste > 0) {
-                                        $qte_nouvelle = $qte_bl + $qte_saisie;
-                                        if ($qte_nouvelle > $qte_bc) {
-                                            $produitsIncoherents[] = [
-                                                'nomProduit' => $nomProduit,
-                                                'quantiteSaisie' => $qte_saisie,
-                                                'reste' => $reste
-                                            ];
-                                            continue;
-                                        }
-                                    } else {
-                                        $qte_nouvelle = $qte_saisie;
-                                        if ($qte_nouvelle > $qte_bc) {
-                                            $produitsIncoherents[] = [
-                                                'nomProduit' => $nomProduit,
-                                                'quantiteSaisie' => $qte_saisie,
-                                                'reste' => $reste
-                                            ];
-                                            continue;
-                                        }
-                                    }
-                
                                     $stmtUpdate = $gc->getDb()->prepare("
                                         UPDATE bon_livraison_produit 
                                         SET quantite = :quantite, unite = :unite 
                                         WHERE idBL = :idBL AND idP = :idP AND dateadd = :dateadd
                                     ");
                                     $stmtUpdate->execute([
-                                        ':quantite' => $qte_nouvelle,
-                                        ':unite' => $unite_saisie,
-                                        ':idBL' => $idBL,
-                                        ':idP' => $id,
-                                        ':dateadd' => $dateadd
+                                        ':quantite' => $qte_saisie,
+                                        ':unite'    => $unite_saisie,
+                                        ':idBL'     => $idBL,
+                                        ':idP'      => $id,
+                                        ':dateadd'  => $dateadd
                                     ]);
                                 }
                             }
@@ -1332,12 +1362,12 @@ WHERE
                                 echo json_encode([
                                     'success' => false,
                                     'message' => 'Incohérences détectées.',
-                                    'produitsIncoherents' => $produitsIncoherents
+                                    'erreurs' => $produitsIncoherents
                                 ]);
                                 exit;
                             }
                 
-                            // Marquer le bon de livraison comme "en cours"
+                            // Marquer le bon comme "en cours"
                             $stmt = $gc->getDb()->prepare("UPDATE bon_livraison SET Etat_Livraison = 5 WHERE idBL = :idBL");
                             $stmt->execute([':idBL' => $idBL]);
                 
@@ -1346,7 +1376,8 @@ WHERE
                     } catch (PDOException $e) {
                         echo json_encode(['success' => false, 'message' => "Erreur PDO : " . $e->getMessage()]);
                     }
-                    break;                
+                    break;                                
+
     case 34:
       
     
@@ -3475,6 +3506,42 @@ case 44:
                                                                     error_log("❌ ERREUR COMMANDE : " . $e->getMessage());
                                                                     echo json_encode(["success" => false, "message" => "Erreur serveur : " . $e->getMessage()]);
                                                                 }
-                                                                return;                                                                                                                                                                                                                                                
+                                                                return;
+                                                                
+                                                            // ✅ Générer nom automatique de livraison en fonction de la commande sélectionnée
+                                                            case 10:
+                                                                try {
+                                                                    if (empty($_GET['idBC'])) {
+                                                                        echo json_encode(['status' => 'error', 'message' => 'ID de commande manquant']);
+                                                                        exit;
+                                                                    }
+
+                                                                    $idBC = $_GET['idBC'];
+                                                                    $db = $gc->getDb();
+
+                                                                    // 🔹 Récupérer le nom du bon de commande
+                                                                    $stmt1 = $db->prepare("SELECT nomBC FROM bon_commande WHERE id_BC = :id");
+                                                                    $stmt1->execute([':id' => $idBC]);
+                                                                    $nomBC = $stmt1->fetchColumn();
+
+                                                                    if (!$nomBC) {
+                                                                        echo json_encode(['status' => 'error', 'message' => 'Commande introuvable']);
+                                                                        exit;
+                                                                    }
+
+                                                                    // 🔹 Compter les livraisons existantes pour cette commande
+                                                                    $stmt2 = $db->prepare("SELECT COUNT(*) FROM bon_livraison WHERE id_bc = :id");
+                                                                    $stmt2->execute([':id' => $idBC]);
+                                                                    $nbLivraisons = intval($stmt2->fetchColumn());
+
+                                                                    echo json_encode([
+                                                                        'status' => 'success',
+                                                                        'next' => $nbLivraisons + 1,
+                                                                        'nomBC' => $nomBC
+                                                                    ]);
+                                                                } catch (Exception $e) {
+                                                                    echo json_encode(['status' => 'error', 'message' => 'Erreur serveur']);
+                                                                }
+                                                                break;
                                 }
                                 ?>

@@ -555,17 +555,19 @@ $nomBL = $_GET['nomBL'];
                         </div>
                     </div>
                 </div>
-<div class="container">
-    <form id="bonForm" method="post">
-        <a href='Liste_BL.php' class="btn-secondary">Retour</a><br><br>
-        <h1>Bon de Livraison: <?php echo '<b>' . $nomBL . '</b>'; ?></h1>
-        <div id="productList" class="product-list">
-            <h2>Produits</h2>
-            <!-- Les produits seront chargés ici via AJAX -->
-        </div>
-        <button type="button" class="btn btn-success" name="enregistrerTout" id="enregistrerTout">Enregistrer Tout</button>
-    </form>
-</div>
+
+                <div class="container">
+                    <form id="bonForm" method="post">
+                        <a href='Liste_BL.php' class="btn-secondary">Retour</a><br><br>
+                        <h1>Bon de Livraison: <?php echo '<b>' . $nomBL . '</b>'; ?></h1>
+                        <div id="productList" class="product-list">
+                            <h2>Produits</h2>
+                            <!-- Les produits seront chargés ici via AJAX -->
+                        </div>
+                        <button type="button" class="btn btn-success" name="enregistrerTout" id="enregistrerTout">Enregistrer Tout</button>
+                    </form>
+                </div>
+                
     <div class="footer py-4 d-flex flex-lg-column" id="kt_footer">
                     <div class="container-fluid d-flex flex-column flex-md-row align-items-center justify-content-between">
                         <div class="text-dark order-2 order-md-1">

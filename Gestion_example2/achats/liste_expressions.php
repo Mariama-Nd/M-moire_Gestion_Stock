@@ -600,7 +600,7 @@
                     <th>Titre</th>
                     <th>Structure</th>
                     <th>Nom</th>
-                    <th>Prénom</th>
+                    <th>Prénom</th>^
                     <th>Date</th>
                     <th>Montant estimé</th>
                     <th>Actions</th>

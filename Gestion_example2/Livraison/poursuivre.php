@@ -682,19 +682,26 @@ $nomBL = $_GET["nomBL"];
                         </div>
                     </div>
                 </div>
-    <form id="bonForm" method="post">
-        
-        <h1>Livraison: <?php echo '<b>' . $nomBL . '</b>'; ?></h1>
-       
-        <div id="productList" class="product-list">
-            <!-- Les produits enregistrés seront ajoutés ici par JavaScript -->
+    <!-- Conteneur principal stylisé -->
+    <div class="container p-4 mt-4 shadow-sm bg-white rounded border">
+
+        <form id="bonForm" method="post">
             
-            <!-- Les autres produits du bon de commande seront ajoutés ici par JavaScript -->
-        </div>
+            <h1 class="mb-4">Livraison : <b><?php echo htmlspecialchars($nomBL); ?></b></h1>
         
-        <div id="productListNE"></div>
-        <button type="button" class="btn btn-success" id="enregistrerTout">Enregistrer Tout</button>
-    </form>
+            <!-- Liste des produits (remplie en JS) -->
+            <div id="productList" class="product-list mb-4">
+                <!-- Produits injectés dynamiquement ici -->
+            </div>
+            
+            <!-- Bouton d'action principal -->
+            <div class="d-flex justify-content-end">
+                <button type="button" class="btn btn-success" id="enregistrerTout">✅ Enregistrer Tout</button>
+            </div>
+            
+        </form>
+
+    </div>
     
     <div class="footer py-4 d-flex flex-lg-column" id="kt_footer">
                     <div class="container-fluid d-flex flex-column flex-md-row align-items-center justify-content-between">

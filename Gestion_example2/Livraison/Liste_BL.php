@@ -613,7 +613,7 @@
                         </select><br>
 
                         <label for="nomBL"><b>Nom de la Livraison:</b></label>
-                        <input type="text" id="nomBL" name="nomBL" required><br><br>
+                        <input type="text" id="nomBL" name="nomBL" readonly required style="background-color: #e9ecef;"><br><br>
 
                         <label for="bordereau"><b>Numero Bordereau_de_Livraison :</b></label>
                     <input type="number" id="bordereau" name="bordereau" required><br><br>

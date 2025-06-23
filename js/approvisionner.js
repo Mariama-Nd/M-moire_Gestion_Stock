@@ -14,48 +14,80 @@ document.addEventListener('DOMContentLoaded', function () {
                     const productItem = document.createElement('div');
                     productItem.className = 'product-item';
                     productItem.dataset.idp = product.idP;
+                
+                    const quantiteLivree = parseFloat(product.quantite_livree ?? 0);
+                    const resteALivrer = parseFloat(product.quantite) - quantiteLivree;
+                
+                    let boutons = '';
+                    if (quantiteLivree > 0) {
+                        boutons = `
+                            <button type="button" class="modify" data-idp="${product.idP}" style="background-color: orange;" disabled>Modifier</button>
+                            <button type="button" class="delete" data-idp="${product.idP}" style="background-color: red;" disabled>Retirer</button>
+                        `;
+                    } else {
+                        boutons = `<button type="button" class="partielle-save" data-idp="${product.idP}" disabled>Enregistrer</button>`;
+                    }
+                
                     productItem.innerHTML = `
                         <input type="checkbox" id="prod-${product.idP}" name="products[]" value="${product.idP}">
                         <label for="prod-${product.idP}" class="product-name"><b>${product.nomproduit} <br>
-                            (Commander: ${product.quantite})</b></label>
-
+                            (Commandé: ${product.quantite})</b></label>
+                        <div><small>Déjà livré : ${quantiteLivree} / Reste : ${resteALivrer}</small></div>
+                
                         <span id="quantite_cmd${product.idP}" hidden="true">${product.quantite}</span>
-                        <input type="number" name="quantity[]" min="0" id="${product.idP}" disabled placeholder="Quantité Reçue">
-
+                        <input type="number" name="quantity[]" min="0" id="${product.idP}" value="${quantiteLivree > 0 ? quantiteLivree : ''}" disabled placeholder="Quantité Reçue">
+                
                         <label for="prod${product.idP}"><b>Unité</b></label>
                         <select name="unite[]" class="product-unite" id="unite${product.idP}" disabled>
                             <option value="">-- unité --</option>
-                            <option value="pièce">pièce</option>
-                            <option value="carton">carton</option>
-                            <option value="boîte">boîte</option>
+                            <option value="pièce" ${product.unite === 'pièce' ? 'selected' : ''}>pièce</option>
+                            <option value="carton" ${product.unite === 'carton' ? 'selected' : ''}>carton</option>
+                            <option value="boîte" ${product.unite === 'boîte' ? 'selected' : ''}>boîte</option>
                         </select>
-
+                
                         <input type="hidden" name="idBL" value="${idBL}">
-                        <button type="button" class="partielle-save" data-idp="${product.idP}">Enregistrer</button>
+                        ${boutons}
                     `;
                     productList.appendChild(productItem);
-                });
+                });                
 
+                // Gestion de l'activation des champs quand on coche
                 document.querySelectorAll('.product-item input[type="checkbox"]').forEach(checkbox => {
                     checkbox.addEventListener('change', function () {
                         const productId = this.value;
                         const quantityInput = document.getElementById(productId);
                         const uniteInput = document.getElementById('unite' + productId);
+                        const saveBtn = this.parentElement.querySelector('.partielle-save');
+                        const modifyBtn = this.parentElement.querySelector('.modify');
+                        const deleteBtn = this.parentElement.querySelector('.delete');
 
-                        if (this.checked) {
-                            quantityInput.disabled = false;
-                            uniteInput.disabled = false;
-                        } else {
-                            quantityInput.disabled = true;
-                            uniteInput.disabled = true;
-                        }
+                        const isChecked = this.checked;
+
+                        quantityInput.disabled = !isChecked;
+                        uniteInput.disabled = !isChecked;
+                        if (saveBtn) saveBtn.disabled = !isChecked;
+                        if (modifyBtn) modifyBtn.disabled = !isChecked;
+                        if (deleteBtn) deleteBtn.disabled = !isChecked;
                     });
                 });
 
+                // Rattacher les événements aux boutons
                 document.querySelectorAll('.partielle-save').forEach(button => {
                     button.addEventListener('click', function () {
                         const productId = this.getAttribute('data-idp');
                         saveProduct(productId);
+                    });
+                });
+                document.querySelectorAll('.modify').forEach(button => {
+                    button.addEventListener('click', function () {
+                        const id = this.getAttribute('data-idp');
+                        modifyProduct(id, idBL);
+                    });
+                });
+                document.querySelectorAll('.delete').forEach(button => {
+                    button.addEventListener('click', function () {
+                        const id = this.getAttribute('data-idp');
+                        deleteProduct(id);
                     });
                 });
             }
@@ -64,15 +96,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function saveProduct(idP) {
         const productItem = document.querySelector(`.product-item[data-idp="${idP}"]`);
-        if (!productItem) {
-            console.error("Produit non trouvé pour l'ID: " + idP);
-            return;
-        }
+        if (!productItem) return;
 
         const checkbox = productItem.querySelector('input[type="checkbox"]');
         const quantityInput = productItem.querySelector('input[type="number"]');
         const uniteInput = productItem.querySelector('select.product-unite');
-        let coherance_avec_Q_cmd = document.getElementById('quantite_cmd' + idP).innerText;
 
         if (!checkbox.checked) {
             alert("Veuillez sélectionner le produit avant d'entrer une quantité.");
@@ -81,11 +109,16 @@ document.addEventListener('DOMContentLoaded', function () {
 
         const quantity = quantityInput.value.trim();
         const unite = uniteInput.value.trim();
+        const qte_cmd = parseFloat(document.getElementById('quantite_cmd' + idP).innerText || 0);
+        const qte_livree = parseFloat(productItem.querySelector('small')?.innerText.match(/Déjà livré\s*:\s*(\d+(\.\d+)?)/)?.[1] || 0);
+        const reste = qte_cmd - qte_livree;
 
-        if (!quantity || isNaN(quantity) || parseFloat(quantity) <= 0 || quantity > coherance_avec_Q_cmd) {
+        if (!quantity || isNaN(quantity) || parseFloat(quantity) <= 0 || parseFloat(quantity) > reste) {
             alert("Veuillez entrer une quantité valide.");
             return;
         }
+
+        const mode = "remplacement";
 
         const formData = new FormData();
         formData.append('option', 23);
@@ -94,6 +127,7 @@ document.addEventListener('DOMContentLoaded', function () {
         formData.append('idP', idP);
         formData.append('quantity', quantity);
         formData.append('unite', unite);
+        formData.append('mode', mode);
 
         fetch('../../controlleur/controlleur.php', {
             method: 'POST',
@@ -102,11 +136,7 @@ document.addEventListener('DOMContentLoaded', function () {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Succès',
-                    text: data.message,
-                });
+                Swal.fire({ icon: 'success', title: 'Succès', text: data.message });
 
                 const modifyButton = document.createElement('button');
                 modifyButton.textContent = 'Modifier';
@@ -140,123 +170,62 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    document.getElementById('enregistrerTout').addEventListener('click', function () {
-        const selectedProducts = [];
-        const quantities = [];
-        const unites = [];
-        const invalidProducts = [];
-
-        document.querySelectorAll('input[name="products[]"]:checked').forEach(checkbox => {
-            const productId = checkbox.value;
-            const quantityInput = checkbox.parentElement.querySelector('input[type="number"]');
-            const quantity = quantityInput.value.trim();
-            const productName = checkbox.parentElement.querySelector('.product-name').textContent;
-            const unitee = checkbox.parentElement.querySelector('.product-unite').value.trim();
-
-            if (!quantity || isNaN(quantity) || parseFloat(quantity) <= 0) {
-                invalidProducts.push(productName);
-            } else {
-                selectedProducts.push(productId);
-                quantities.push(quantity);
-                unites.push(unitee);
-            }
-        });
-
-        if (invalidProducts.length > 0) {
-            alert("Veuillez entrer une Quantité valide pour les produits suivants :\n" + invalidProducts.join(', '));
-            return;
-        }
-
-        if (selectedProducts.length === 0) {
-            alert("Aucun produit sélectionné.");
-            return;
-        }
-
-        const data = {
-            products: selectedProducts,
-            quantity: quantities,
-            unite: unites,
-            nomBL: nomBL,
-            idBC: idBC,
-            idBL: idBL,
-            enregistrerTout: true,
-        };
-
-        fetch('../../controlleur/controlleur.php?option=27', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data)
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                alert("Enregistrement réussi.");
-                window.location.href = "Liste_BL.php";
-            } else {
-                if (data.produitsIncoherents && data.produitsIncoherents.length > 0) {
-                    let message = "Incohérence de quantités pour les produits suivants :\n";
-                    data.produitsIncoherents.forEach(prod => {
-                        message += `${prod.nomProduit} (Quantité saisie: ${prod.quantiteSaisie}, Reste à livrer: ${prod.reste})\n`;
-                    });
-                    alert(message);
-                } else {
-                    alert("Erreur : " + (data.message || "Échec de l'enregistrement."));
-                }
-            }
-        })
-        .catch(error => {
-            console.error("Erreur de connexion au serveur.");
-            alert("Erreur de connexion au serveur.");
-        });
-    });
-
     function modifyProduct(idP, idBL) {
         const productItem = document.querySelector(`.product-item[data-idp="${idP}"]`);
         const quantityInput = productItem.querySelector('input[type="number"]');
         const uniteInput = productItem.querySelector('select.product-unite');
-        const currentQuantity = quantityInput.value;
-        const currentUnite = uniteInput.value;
-        let coherance_avec_Q_cmd = document.getElementById('quantite_cmd' + idP).innerText;
-
-        if (currentQuantity === null) return;
-
-        if (currentQuantity.trim() === "") {
-            Swal.fire({ icon: 'warning', title: 'Entrée invalide', text: 'Veuillez remplir tous les champs.' });
-        } else if (isNaN(currentQuantity) || parseFloat(currentQuantity) < 0 || currentQuantity > coherance_avec_Q_cmd) {
-            Swal.fire({ icon: 'warning', title: 'Quantité invalide', text: 'Veuillez entrer une valeur valide.' });
-        } else {
-            const formData = new FormData();
-            formData.append('option', 25);
-            formData.append('idBL', idBL);
-            formData.append('idP', idP);
-            formData.append('quantity', currentQuantity);
-            formData.append('unite', currentUnite);
-
-            fetch('../../controlleur/controlleur.php', {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    Swal.fire({ icon: 'success', title: 'Modification réussie', text: 'Produit mis à jour.' });
-                } else {
-                    Swal.fire({ icon: 'error', title: 'Erreur', text: data.message });
-                }
-            })
-            .catch(error => {
-                Swal.fire({ icon: 'error', title: 'Erreur serveur', text: 'Erreur de connexion.' });
-            });
+    
+        const quantity = quantityInput.value.trim();
+        const unite = uniteInput.value.trim();
+        const qte_cmd = parseFloat(document.getElementById('quantite_cmd' + idP).innerText || 0);
+        const qte_livree = parseFloat(quantity); // quantité mise à jour
+        const mode = "remplacement";
+    
+        if (!quantity || isNaN(quantity) || parseFloat(quantity) <= 0 || parseFloat(quantity) > qte_cmd) {
+            Swal.fire({ icon: 'warning', title: 'Quantité invalide', text: 'Veuillez entrer une valeur correcte.' });
+            return;
         }
-    }
+    
+        const formData = new FormData();
+        formData.append('option', 25);
+        formData.append('idBL', idBL);
+        formData.append('idBC', idBC);
+        formData.append('idP', idP);
+        formData.append('quantity', quantity);
+        formData.append('unite', unite);
+        formData.append('mode', mode);
+    
+        fetch('../../controlleur/controlleur.php', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                Swal.fire({ icon: 'success', title: 'Produit modifié.' });
+    
+                const infoText = productItem.querySelector('small');
+                if (infoText) {
+                    infoText.innerText = `Déjà livré : ${quantity} / Reste : ${qte_cmd - quantity}`;
+                }
+    
+                // ✅ Ne pas supprimer ou recréer les boutons — ils sont déjà présents
+            } else {
+                Swal.fire({ icon: 'error', title: 'Erreur', text: data.message });
+            }
+        })
+        .catch(error => {
+            Swal.fire({ icon: 'error', title: 'Erreur serveur', text: 'Erreur de connexion.' });
+        });
+    }    
 
     function deleteProduct(idP, quantity) {
         Swal.fire({
             title: 'Êtes-vous sûr ?',
-            text: "Vous allez supprimer ce produit.",
+            text: "Vous allez retirer ce produit.",
             icon: 'warning',
             showCancelButton: true,
-            confirmButtonText: 'Oui, supprimer',
+            confirmButtonText: 'Oui, retirer',
             cancelButtonText: 'Annuler',
             reverseButtons: true
         }).then((result) => {
@@ -268,7 +237,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        Swal.fire({ icon: 'success', title: 'Suppression réussie', text: 'Produit supprimé.' }).then(() => {
+                        Swal.fire({ icon: 'success', title: 'Produit retiré.' }).then(() => {
                             const productItem = document.querySelector(`.product-item[data-idp="${idP}"]`);
                             productItem.parentElement.removeChild(productItem);
                             location.reload();
@@ -283,6 +252,78 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         });
     }
+
+    document.getElementById('enregistrerTout').addEventListener('click', function () {
+        const promises = [];
+        const invalidProducts = [];
+    
+        document.querySelectorAll('input[name="products[]"]:checked').forEach(checkbox => {
+            const productItem = checkbox.closest('.product-item');
+            const productId = checkbox.value;
+            const quantityInput = productItem.querySelector('input[type="number"]');
+            const uniteInput = productItem.querySelector('.product-unite');
+            const infoText = productItem.querySelector('small');
+            const quantity = quantityInput.value.trim();
+            const unite = uniteInput.value.trim();
+            const productName = productItem.querySelector('.product-name').textContent;
+    
+            if (!quantity || isNaN(quantity) || parseFloat(quantity) <= 0) {
+                invalidProducts.push(productName);
+                return;
+            }
+    
+            const qte_cmd = parseFloat(document.getElementById('quantite_cmd' + productId).innerText || 0);
+            const deja_livree = parseFloat(infoText?.innerText.match(/Déjà livré\s*:\s*(\d+(\.\d+)?)/)?.[1] || 0);
+            const mode = "remplacement";
+    
+            const formData = new FormData();
+            formData.append('idBL', idBL);
+            formData.append('idBC', idBC);
+            formData.append('idP', productId);
+            formData.append('quantity', quantity);
+            formData.append('unite', unite);
+            formData.append('mode', mode);
+    
+            if (deja_livree > 0) {
+                formData.append('option', 25); // Modifier
+            } else {
+                formData.append('option', 23); // Ajouter
+            }
+    
+            const req = fetch('../../controlleur/controlleur.php', {
+                method: 'POST',
+                body: formData
+            }).then(res => res.json());
+    
+            promises.push(req);
+        });
+    
+        if (invalidProducts.length > 0) {
+            alert("Veuillez entrer une Quantité valide pour les produits suivants :\n" + invalidProducts.join(', '));
+            return;
+        }
+    
+        if (promises.length === 0) {
+            alert("Aucun produit sélectionné.");
+            return;
+        }
+    
+        Promise.all(promises)
+            .then(results => {
+                const erreurs = results.filter(r => !r.success);
+                if (erreurs.length > 0) {
+                    alert("Certaines opérations ont échoué.");
+                    console.warn(erreurs);
+                } else {
+                    Swal.fire({ icon: 'success', title: 'Succès', text: 'Tous les produits ont été enregistrés.' })
+                        .then(() => window.location.href = "Liste_BL.php");
+                }
+            })
+            .catch(error => {
+                alert("Erreur lors de l’enregistrement.");
+                console.error(error);
+            });
+    });    
 
     document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
         checkbox.checked = false;

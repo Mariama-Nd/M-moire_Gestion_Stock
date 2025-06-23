@@ -90,27 +90,36 @@ function supprimerBL(idBL) {
     });
 }
 
-
 function getActions(livraison) {
-    const { idBL, id_bc: idBC, nomBL, Etat_Livraison, nbr_produits } = livraison;
+    const { idBL, id_bc: idBC, nomBL, Etat_Livraison: EtatStr, nbr_produits } = livraison;
+    const Etat_Livraison = parseInt(EtatStr);
     let actions = '';
 
     if (nbr_produits <= 0) {
         actions += `<button onclick="location.href='approvisionner.php?idBL=${idBL}&idBC=${idBC}&nomBL=${nomBL}'" class="btn btn-primary btn-custom">Approvisionner</button>`;
-        actions += `<button name="supprimer" onclick="supprimerBL(${idBL})" class="btn btn-danger btn-custom">Supprimer</button>`;
+
+        // Supprimer uniquement si l'état n'est pas terminé (3), validé (4) ou sauvegardé (5)
+        if (![3, 4, 5].includes(Etat_Livraison)) {
+            actions += `<button name="supprimer" onclick="supprimerBL(${idBL})" class="btn btn-danger btn-custom">Supprimer</button>`;
+        }
+
     } else {
-        if (Etat_Livraison != 3 && Etat_Livraison != 4) {
+        // Si l'état est Sauvegardé (5)
+        if (Etat_Livraison === 5) {
+            actions += `<button name="terminer" onclick="validerBL(${idBL})" class="btn btn-success btn-custom">Valider</button>`;
+            actions += `<button onclick="location.href='poursuivre.php?idBL=${idBL}&idBC=${idBC}&nomBL=${nomBL}'" class="btn btn-warning btn-custom">Poursuivre</button>`;
+        }
+
+        // Si l’état est en cours (ex : 1 ou 2)
+        else if (![3, 4].includes(Etat_Livraison)) {
             actions += `<button name="terminer" onclick="validerBL(${idBL})" class="btn btn-success btn-custom">Valider</button>`;
             actions += `<button name="supprimer" onclick="supprimerBL(${idBL})" class="btn btn-danger btn-custom">Supprimer</button>`;
         }
-        if (Etat_Livraison == 3) {
-            actions += `<button onclick="window.open('voir.php?idBL=${idBL}&nomBL=${nomBL}', '_blank')" class="btn btn-light btn-custom" style=" background-color:rgb(111, 189, 215); ">Voir Bon</button>`;
 
-            actions += `<button onclick="location.href='consulter_bl.php?idBL=${idBL}&idBC=${idBC}&nomBL=${nomBL}'" class="btn btn-secondary btn-custom">Aperçu </button>`;
-            actions += `<button name="supprimer" onclick="supprimerBL(${idBL})" class="btn btn-danger btn-custom">Supprimer</button>`;
-        }
-        if (Etat_Livraison == 5) {
-            actions += `<button onclick="location.href='poursuivre.php?idBL=${idBL}&idBC=${idBC}&nomBL=${nomBL}'" class="btn btn-warning btn-custom">Poursuivre</button>`;
+        // Si terminé (3)
+        if (Etat_Livraison === 3) {
+            actions += `<button onclick="window.open('voir.php?idBL=${idBL}&nomBL=${nomBL}', '_blank')" class="btn btn-light btn-custom" style=" background-color:rgb(111, 189, 215); ">Voir Bon</button>`;
+            actions += `<button onclick="location.href='consulter_bl.php?idBL=${idBL}&idBC=${idBC}&nomBL=${nomBL}'" class="btn btn-secondary btn-custom">Aperçu</button>`;
         }
     }
 
@@ -144,6 +153,31 @@ function openModalButton() {
                 openModalButton();
             });
         });
+
+        document.getElementById('product-name').addEventListener('change', function () {
+            const idBC = this.value;
+            if (!idBC) return;
+        
+            fetch(`../../controlleur/controlleur.php?option=101&idBC=${idBC}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === "success") {
+                        const numero = data.next;
+                        const nomBC = data.nomBC;
+                        const generatedName = `${nomBC} - Livraison ${numero}`;
+                        document.getElementById('nomBL').value = generatedName;
+                    } else {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Erreur',
+                            text: data.message
+                        });
+                    }
+                })
+                .catch(error => {
+                    console.error("Erreur lors de la génération du nom de livraison :", error);
+                });
+        });                
 }
 const closeButton = document.getElementsByClassName("close")[0];
 closeButton.onclick = function () {
