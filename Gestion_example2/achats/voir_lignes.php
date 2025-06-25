@@ -714,29 +714,29 @@ if ($exp) {
 
                 <!-- Modal ajout fournisseur -->
                 <div class="modal fade" id="modalAjoutFournisseur" tabindex="-1" aria-hidden="true">
-                <div class="modal-dialog modal-dialog-centered">
-                    <div class="modal-content">
-                    <form id="formAjoutFournisseur">
-                        <div class="modal-header bg-success text-white">
-                        <h5 class="modal-title">Nouveau fournisseur</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content">
+                        <form id="formAjoutFournisseur">
+                            <div class="modal-header bg-success text-white">
+                            <h5 class="modal-title">Nouveau fournisseur</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                            <input type="text" class="form-control mb-2" name="nomF" placeholder="Nom" required>
+                            <input type="text" class="form-control mb-2" name="prenomF" placeholder="Prénom" required>
+                            <input type="text" class="form-control mb-2" name="entreprise" placeholder="Entreprise" required>
+                            <input type="text" class="form-control mb-2" name="adresseF" placeholder="Adresse" required>
+                            <input type="text" class="form-control mb-2" name="ville" placeholder="Ville" required>
+                            <input type="text" class="form-control mb-2" name="telF" placeholder="Téléphone" required>
+                            <input type="email" class="form-control mb-2" name="emailF" placeholder="Email" required>
+                            </div>
+                            <div class="modal-footer">
+                            <button type="submit" class="btn btn-success">Ajouter</button>
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                            </div>
+                        </form>
                         </div>
-                        <div class="modal-body">
-                        <input type="text" class="form-control mb-2" name="nomF" placeholder="Nom" required>
-                        <input type="text" class="form-control mb-2" name="prenomF" placeholder="Prénom" required>
-                        <input type="text" class="form-control mb-2" name="entreprise" placeholder="Entreprise" required>
-                        <input type="text" class="form-control mb-2" name="adresseF" placeholder="Adresse" required>
-                        <input type="text" class="form-control mb-2" name="ville" placeholder="Ville" required>
-                        <input type="text" class="form-control mb-2" name="telF" placeholder="Téléphone" required>
-                        <input type="email" class="form-control mb-2" name="emailF" placeholder="Email" required>
-                        </div>
-                        <div class="modal-footer">
-                        <button type="submit" class="btn btn-success">Ajouter</button>
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
-                        </div>
-                    </form>
                     </div>
-                </div>
                 </div>
 
     <div class="footer py-4 d-flex flex-lg-column" id="kt_footer">

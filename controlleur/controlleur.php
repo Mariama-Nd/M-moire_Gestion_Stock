@@ -3334,35 +3334,10 @@ case 44:
                                                                 }
                                                                 break;
 
-                                                            //Mettre à jour prix_reel et quantite_reelle
-                                                            case 97:
-                                                                try {
-                                                                    $db = $gc->getDb();
-                                                                    $ligne_id = intval($_POST['ligne_id']);
-                                                                    $prix_reel = floatval($_POST['prix_reel']);
-                                                                    $quantite_reelle = floatval($_POST['quantite_reelle']);
-                                                            
-                                                                    $stmt = $db->prepare("
-                                                                        UPDATE lignebudget 
-                                                                        SET prix_reel = :prix_reel, quantite_reelle = :quantite_reelle
-                                                                        WHERE id = :ligne_id
-                                                                    ");
-                                                                    $stmt->execute([
-                                                                        ':prix_reel' => $prix_reel,
-                                                                        ':quantite_reelle' => $quantite_reelle,
-                                                                        ':ligne_id' => $ligne_id
-                                                                    ]);
-                                                            
-                                                                    echo json_encode(["success" => true, "message" => "Ligne mise à jour avec succès."]);
-                                                                } catch (Exception $e) {
-                                                                    echo json_encode(["success" => false, "message" => "Erreur : " . $e->getMessage()]);
-                                                                }
-                                                                break;
-                                                                    
-                                                            //récupérer les fournisseurs
+                                                            // 🔁 Récupérer les fournisseurs pour la commande
                                                             case 98:
                                                                 try {
-                                                                    $stmt = $gc->getDb()->prepare("SELECT * FROM fournisseur ORDER BY entreprise ASC");
+                                                                    $stmt = $gc->getDb()->prepare("SELECT idF AS id, nomF, prenomF, entreprise FROM fournisseur ORDER BY entreprise ASC");
                                                                     $stmt->execute();
                                                                     echo json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
                                                                 } catch (Exception $e) {
@@ -3370,58 +3345,41 @@ case 44:
                                                                 }
                                                                 break;
 
-                                                            //ajouter un fournisseur
-                                                            case 99:
-                                                                try {
-                                                                    $stmt = $gc->getDb()->prepare("
-                                                                        INSERT INTO fournisseur (nomF, prenomF, adresseF, telF, emailF, entreprise, ville)
-                                                                        VALUES (:nomF, :prenomF, :adresseF, :telF, :emailF, :entreprise, :ville)
-                                                                    ");
-                                                                    $stmt->execute([
-                                                                        ':nomF' => $_POST['nomF'],
-                                                                        ':prenomF' => $_POST['prenomF'],
-                                                                        ':adresseF' => $_POST['adresseF'],
-                                                                        ':telF' => $_POST['telF'],
-                                                                        ':emailF' => $_POST['emailF'],
-                                                                        ':entreprise' => $_POST['entreprise'],
-                                                                        ':ville' => $_POST['ville'],
-                                                                    ]);
-                                                                    echo json_encode(["message" => "Fournisseur ajouté avec succès."]);
-                                                                } catch (Exception $e) {
-                                                                    echo json_encode(["message" => "Erreur : " . $e->getMessage()]);
-                                                                }
-                                                                break;                                                                
-                                                            
                                                             // Créer une commande d'achat avec ses lignes
                                                             case 100:
                                                                 try {
                                                                     $db = $gc->getDb();
-                                                            
+
                                                                     $ligne_ids          = $_POST['ligne_ids'] ?? [];
                                                                     $quantites          = $_POST['quantites'] ?? [];
                                                                     $prix               = $_POST['prix'] ?? [];
-                                                                    $fournisseurs       = $_POST['fournisseurs'] ?? [];
-                                                                    $mode_reglements    = $_POST['mode_reglement'] ?? [];
-                                                                    $modalite_paiements = $_POST['modalite_paiement'] ?? [];
-                                                            
+
+                                                                    $fournisseur_id     = intval($_POST['fournisseur_id'] ?? 0);
+                                                                    $mode_reglement     = trim($_POST['mode_reglement'] ?? '');
+                                                                    $modalite_paiement  = trim($_POST['modalite_paiement'] ?? '');
+
                                                                     $n = count($ligne_ids);
                                                                     if (
-                                                                        $n === 0 ||
-                                                                        $n !== count($quantites) ||
-                                                                        $n !== count($prix) ||
-                                                                        $n !== count($fournisseurs) ||
-                                                                        $n !== count($mode_reglements) ||
-                                                                        $n !== count($modalite_paiements)
+                                                                        $n === 0 || $n !== count($quantites) || $n !== count($prix)
+                                                                        || $fournisseur_id <= 0 || !$mode_reglement || !$modalite_paiement
                                                                     ) {
-                                                                        echo json_encode(["success" => false, "message" => "Données incohérentes."]);
+                                                                        echo json_encode(["success" => false, "message" => "Données invalides ou incomplètes."]);
                                                                         return;
                                                                     }
-                                                            
-                                                                    // 🔍 Vérifier que les quantités demandées ne dépassent pas les quantités restantes
+
+                                                                    // Vérifier fournisseur
+                                                                    $stmtF = $db->prepare("SELECT idF FROM fournisseur WHERE idF = :id");
+                                                                    $stmtF->execute([':id' => $fournisseur_id]);
+                                                                    if (!$stmtF->fetch()) {
+                                                                        echo json_encode(["success" => false, "message" => "Fournisseur introuvable."]);
+                                                                        return;
+                                                                    }
+
+                                                                    // Vérifier quantités restantes
                                                                     for ($i = 0; $i < $n; $i++) {
                                                                         $idLigne = intval($ligne_ids[$i]);
-                                                                        $qte    = floatval($quantites[$i]);
-                                                            
+                                                                        $qte     = floatval($quantites[$i]);
+
                                                                         $stmtRestante = $db->prepare("
                                                                             SELECT lb.quantite - COALESCE((
                                                                                 SELECT SUM(clb.quantite_reelle)
@@ -3434,7 +3392,7 @@ case 44:
                                                                         ");
                                                                         $stmtRestante->execute([':idLigne' => $idLigne]);
                                                                         $reste = floatval($stmtRestante->fetchColumn());
-                                                            
+
                                                                         if ($qte > $reste) {
                                                                             echo json_encode([
                                                                                 "success" => false,
@@ -3443,65 +3401,62 @@ case 44:
                                                                             return;
                                                                         }
                                                                     }
-                                                            
-                                                                    // ✅ Création de la commande
+
+                                                                    // Déterminer le prochain numéro de commande
+                                                                    $stmtNum = $db->query("SELECT MAX(numero) FROM CommandeAchat");
+                                                                    $dernierNumero = $stmtNum->fetchColumn();
+                                                                    $numero = ($dernierNumero !== null) ? intval($dernierNumero) + 1 : 1;
+
                                                                     $montant_total = 0;
                                                                     for ($i = 0; $i < $n; $i++) {
                                                                         $montant_total += floatval($quantites[$i]) * floatval($prix[$i]);
                                                                     }
-                                                            
+
                                                                     $nom_commande = "commande_" . date("Ymd_His");
                                                                     $etat = "en_attente";
-                                                            
-                                                                    $stmt = $db->prepare("INSERT INTO CommandeAchat (nom, montant_total, etat) VALUES (:nom, :montant_total, :etat)");
+
+                                                                    $stmt = $db->prepare("
+                                                                        INSERT INTO CommandeAchat (nom, numero, montant_total, etat, date_creation, id_fournisseur, mode_reglement, modalite_paiement)
+                                                                        VALUES (:nom, :numero, :montant_total, :etat, NOW(), :id_fournisseur, :mode_reglement, :modalite_paiement)
+                                                                    ");
                                                                     $stmt->execute([
-                                                                        ':nom' => $nom_commande,
-                                                                        ':montant_total' => $montant_total,
-                                                                        ':etat' => $etat
+                                                                        ':nom'               => $nom_commande,
+                                                                        ':numero'            => $numero,
+                                                                        ':montant_total'     => $montant_total,
+                                                                        ':etat'              => $etat,
+                                                                        ':id_fournisseur'    => $fournisseur_id,
+                                                                        ':mode_reglement'    => $mode_reglement,
+                                                                        ':modalite_paiement' => $modalite_paiement
                                                                     ]);
                                                                     $commande_id = $db->lastInsertId();
-                                                            
-                                                                    // ✅ Insertion des lignes avec les nouveaux champs
+
+                                                                    // Insertion des lignes de commande
                                                                     $stmtLigne = $db->prepare("
                                                                         INSERT INTO CommandeAchat_LigneBudget 
-                                                                        (id_CommandeAchat, id_LignesBudget, prix_reel, quantite_reelle, id_fournisseur, date_ajout, mode_reglement, modalite_paiement)
-                                                                        VALUES (:id_commande, :id_ligne, :prix, :quantite, :id_fournisseur, NOW(), :mode_reglement, :modalite_paiement)
+                                                                        (id_CommandeAchat, id_LignesBudget, prix_reel, quantite_reelle, date_ajout)
+                                                                        VALUES (:id_commande, :id_ligne, :prix, :quantite, NOW())
                                                                     ");
-                                                            
+
                                                                     for ($i = 0; $i < $n; $i++) {
                                                                         $idLigne = intval($ligne_ids[$i]);
-                                                                        $qte = floatval($quantites[$i]);
-                                                                        $p = floatval($prix[$i]);
-                                                                        $idf_raw = $fournisseurs[$i];
-                                                                        $idf = intval($idf_raw);
-                                                                        $reglement = trim($mode_reglements[$i]);
-                                                                        $modalite  = trim($modalite_paiements[$i]);
-                                                            
-                                                                        if ($idLigne <= 0 || $qte <= 0 || $p < 0 || empty($idf_raw) || !is_numeric($idf_raw) || $idf <= 0 || !$reglement || !$modalite) {
+                                                                        $qte     = floatval($quantites[$i]);
+                                                                        $p       = floatval($prix[$i]);
+
+                                                                        if ($idLigne <= 0 || $qte <= 0 || $p < 0) {
                                                                             echo json_encode(["success" => false, "message" => "Erreur de saisie sur la ligne " . ($i + 1)]);
                                                                             return;
                                                                         }
-                                                            
-                                                                        $checkFournisseur = $db->prepare("SELECT idF FROM Fournisseur WHERE idF = :id");
-                                                                        $checkFournisseur->execute([':id' => $idf]);
-                                                                        if (!$checkFournisseur->fetch()) {
-                                                                            echo json_encode(["success" => false, "message" => "Fournisseur ID $idf inexistant."]);
-                                                                            return;
-                                                                        }
-                                                            
+
                                                                         $stmtLigne->execute([
-                                                                            ':id_commande'       => $commande_id,
-                                                                            ':id_ligne'          => $idLigne,
-                                                                            ':prix'              => $p,
-                                                                            ':quantite'          => $qte,
-                                                                            ':id_fournisseur'    => $idf,
-                                                                            ':mode_reglement'    => $reglement,
-                                                                            ':modalite_paiement' => $modalite
+                                                                            ':id_commande' => $commande_id,
+                                                                            ':id_ligne'    => $idLigne,
+                                                                            ':prix'        => $p,
+                                                                            ':quantite'    => $qte
                                                                         ]);
                                                                     }
-                                                            
-                                                                    echo json_encode(["success" => true, "message" => "Commande enregistrée avec succès."]);
-                                                            
+
+                                                                    echo json_encode(["success" => true, "message" => "Commande n°$numero enregistrée avec succès."]);
+
                                                                 } catch (Exception $e) {
                                                                     error_log("❌ ERREUR COMMANDE : " . $e->getMessage());
                                                                     echo json_encode(["success" => false, "message" => "Erreur serveur : " . $e->getMessage()]);
@@ -3509,7 +3464,7 @@ case 44:
                                                                 return;
                                                                 
                                                             // ✅ Générer nom automatique de livraison en fonction de la commande sélectionnée
-                                                            case 10:
+                                                            case 101:
                                                                 try {
                                                                     if (empty($_GET['idBC'])) {
                                                                         echo json_encode(['status' => 'error', 'message' => 'ID de commande manquant']);
