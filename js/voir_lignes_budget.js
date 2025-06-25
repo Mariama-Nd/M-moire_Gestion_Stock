@@ -32,29 +32,30 @@ $(document).ready(function () {
             if (Array.isArray(data)) {
                 data.forEach(item => {
                     console.log("🔍 Ligne reçue :", item);
-    
+                
                     const estEpuisé = parseFloat(item.quantite_restante) <= 0;
-    
+                
                     const checkbox = estEpuisé
                         ? `<input type="checkbox" class="check-ligne" disabled title="Quantité restante nulle">`
                         : `<input type="checkbox" class="check-ligne" 
                                data-id="${item.id}" 
                                data-id-ligne="${item.id_LignesBudget}" 
                                data-quantite-restante="${item.quantite_restante}">`;
-    
+                
                     const actions = estEpuisé
                         ? `<span class="text-muted small">Indisponible</span>`
                         : `<div class="d-flex flex-column gap-1">
                                <button class="btn btn-danger btn-sm" onclick="retirerLigne(${item.id})">Retirer</button>
                            </div>`;
-    
+                
                     const rowClasses = estEpuisé ? 'table-secondary text-muted' : '';
-    
+                
                     const newRow = table.row.add([
                         checkbox,
                         item.designation ?? '-',
                         item.quantite != null ? item.quantite : '0',
                         item.quantite_restante != null ? item.quantite_restante : '0',
+                        item.quantite_en_cours != null ? item.quantite_en_cours : '0',
                         item.prix_unitaire != null ? item.prix_unitaire : '0',
                         ((parseFloat(item.quantite) || 0) * (parseFloat(item.prix_unitaire) || 0)).toFixed(2),
                         item.rubrique ?? '-',
@@ -62,9 +63,9 @@ $(document).ready(function () {
                         item.description ?? '-',
                         actions.trim()
                     ]).node();
-    
+                
                     $(newRow).addClass(rowClasses);
-                });
+                });                
             }
             table.draw();
         }, 'json');
@@ -209,8 +210,8 @@ $(document).ready(function () {
 
     $('#btnNouveauFournisseur').on('click', function () {
         $('#formAjoutFournisseur')[0].reset();
-        new bootstrap.Modal(document.getElementById('#modalAjoutFournisseur')).show();
-    });
+        new bootstrap.Modal(document.getElementById('modalAjoutFournisseur')).show();
+    });    
 
     $('#formAjoutFournisseur').on('submit', function (e) {
         e.preventDefault();
@@ -395,6 +396,6 @@ $(document).ready(function () {
                 }
             });
         }, 'json');
-    });        
+    });    
                             
 });

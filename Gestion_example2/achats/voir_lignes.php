@@ -625,8 +625,9 @@ if ($exp) {
                         <tr>
                             <th><input type="checkbox" id="checkAll"></th>
                             <th>Désignation</th>
-                            <th>Quantité</th>
-                            <th>Quantité restante</th> <!-- ajout -->
+                            <th>Quantité demandée</th>
+                            <th>Quantité restante</th>
+                            <th>Quantité en cours</th>
                             <th>Prix unitaire</th>
                             <th>Montant</th>
                             <th>Rubrique</th>

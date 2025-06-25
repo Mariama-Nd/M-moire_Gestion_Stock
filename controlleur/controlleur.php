@@ -3031,8 +3031,8 @@ case 44:
                                                 
                                                         $query = "
                                                             SELECT 
-                                                                lb.id AS id_LignesBudget,   -- utilisé pour data-id-ligne
-                                                                lb.id AS id,                -- utilisé pour bouton Retirer (js: retirerLigne(id))
+                                                                lb.id AS id_LignesBudget,
+                                                                lb.id AS id,
                                                                 lb.designation, 
                                                                 lb.quantite, 
                                                                 lb.prix_unitaire, 
@@ -3040,13 +3040,21 @@ case 44:
                                                                 r.nom AS rubrique, 
                                                                 sr.nom AS sous_rubrique,
                                                 
-                                                                -- Calcul de la quantité restante
+                                                                -- Quantité restante (inclut toutes les commandes, en_attente et validé)
                                                                 COALESCE(lb.quantite - (
                                                                     SELECT COALESCE(SUM(clb.quantite_reelle), 0)
                                                                     FROM CommandeAchat_LigneBudget clb
                                                                     INNER JOIN CommandeAchat ca ON ca.id = clb.id_CommandeAchat
+                                                                    WHERE clb.id_LignesBudget = lb.id
+                                                                ), lb.quantite) AS quantite_restante,
+                                                
+                                                                -- Quantité en cours (seulement les commandes validées)
+                                                                (
+                                                                    SELECT COALESCE(SUM(clb.quantite_reelle), 0)
+                                                                    FROM CommandeAchat_LigneBudget clb
+                                                                    INNER JOIN CommandeAchat ca ON ca.id = clb.id_CommandeAchat
                                                                     WHERE clb.id_LignesBudget = lb.id AND ca.etat = 'validé'
-                                                                ), lb.quantite) AS quantite_restante
+                                                                ) AS quantite_en_cours
                                                 
                                                             FROM lignebudget lb
                                                             LEFT JOIN rubrique r ON lb.rubrique_id = r.id
@@ -3063,7 +3071,7 @@ case 44:
                                                     } catch (Exception $e) {
                                                         echo json_encode(["message" => "Erreur : " . $e->getMessage()]);
                                                     }
-                                                    break;                                                
+                                                    break;                                                                                                
                                                         
                                                         //Récupération des budgets
                                                         case 84:
@@ -3334,7 +3342,32 @@ case 44:
                                                                 }
                                                                 break;
 
-                                                            // 🔁 Récupérer les fournisseurs pour la commande
+                                                            //Mettre à jour prix_reel et quantite_reelleAdd commentMore actions
+                                                            case 97:
+                                                                try {
+                                                                    $db = $gc->getDb();
+                                                                    $ligne_id = intval($_POST['ligne_id']);
+                                                                    $prix_reel = floatval($_POST['prix_reel']);
+                                                                    $quantite_reelle = floatval($_POST['quantite_reelle']);
+                                                            
+                                                                    $stmt = $db->prepare("
+                                                                        UPDATE lignebudget 
+                                                                        SET prix_reel = :prix_reel, quantite_reelle = :quantite_reelle
+                                                                        WHERE id = :ligne_id
+                                                                    ");
+                                                                    $stmt->execute([
+                                                                        ':prix_reel' => $prix_reel,
+                                                                        ':quantite_reelle' => $quantite_reelle,
+                                                                        ':ligne_id' => $ligne_id
+                                                                    ]);
+                                                            
+                                                                    echo json_encode(["success" => true, "message" => "Ligne mise à jour avec succès."]);
+                                                                } catch (Exception $e) {
+                                                                    echo json_encode(["success" => false, "message" => "Erreur : " . $e->getMessage()]);
+                                                                }
+                                                                break;
+
+                                                            // Récupérer les fournisseurs pour la commande
                                                             case 98:
                                                                 try {
                                                                     $stmt = $gc->getDb()->prepare("SELECT idF AS id, nomF, prenomF, entreprise FROM fournisseur ORDER BY entreprise ASC");
@@ -3342,6 +3375,28 @@ case 44:
                                                                     echo json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
                                                                 } catch (Exception $e) {
                                                                     echo json_encode([]);
+                                                                }
+                                                                break;
+
+                                                            //ajouter un fournisseurAdd commentMore actions
+                                                            case 99:
+                                                                try {
+                                                                    $stmt = $gc->getDb()->prepare("
+                                                                        INSERT INTO fournisseur (nomF, prenomF, adresseF, telF, emailF, entreprise, ville)
+                                                                        VALUES (:nomF, :prenomF, :adresseF, :telF, :emailF, :entreprise, :ville)
+                                                                    ");
+                                                                    $stmt->execute([
+                                                                        ':nomF' => $_POST['nomF'],
+                                                                        ':prenomF' => $_POST['prenomF'],
+                                                                        ':adresseF' => $_POST['adresseF'],
+                                                                        ':telF' => $_POST['telF'],
+                                                                        ':emailF' => $_POST['emailF'],
+                                                                        ':entreprise' => $_POST['entreprise'],
+                                                                        ':ville' => $_POST['ville'],
+                                                                    ]);
+                                                                    echo json_encode(["message" => "Fournisseur ajouté avec succès."]);
+                                                                } catch (Exception $e) {
+                                                                    echo json_encode(["message" => "Erreur : " . $e->getMessage()]);
                                                                 }
                                                                 break;
 
@@ -3385,7 +3440,7 @@ case 44:
                                                                                 SELECT SUM(clb.quantite_reelle)
                                                                                 FROM CommandeAchat_LigneBudget clb
                                                                                 JOIN CommandeAchat ca ON ca.id = clb.id_CommandeAchat
-                                                                                WHERE clb.id_LignesBudget = lb.id AND ca.etat = 'validé'
+                                                                                WHERE clb.id_LignesBudget = lb.id
                                                                             ), 0) AS quantite_restante
                                                                             FROM lignebudget lb
                                                                             WHERE lb.id = :idLigne
