@@ -416,11 +416,11 @@
                                 </div>
                                 <div class="menu-sub menu-sub-accordion " kt-hidden-height="507" style="">
                                     <div class="">
-                                        <a class="menu-link" href="../../Gestion_example2/Sortie/historique_sortie.php">
+                                        <a class="menu-link" href="../../Gestion_example2/caisseAchat/caisse.php">
                                             <span class="menu-bullet">
                                                 <span class="bullet bullet-dot"></span>
                                             </span>
-                                            <span class="menu-title"></span>
+                                            <span class="menu-title">Caisse achats</span>
                                         </a>
                                     </div>
                                    

@@ -1,0 +1,9 @@
+REQUETE POST :
+Array
+(
+    [option] => 105
+    [id_commande] => 41
+    [montant] => 8000000
+    [banque] => undefined
+    [recu] => 
+)

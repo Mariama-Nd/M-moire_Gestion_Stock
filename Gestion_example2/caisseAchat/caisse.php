@@ -4,93 +4,100 @@
 <html>
 
 <head>
-    <title>Gestion des Entrées</title>
+<title>Caisse Achats</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css" rel="stylesheet">
 
-
-    <!-- Inclure Bootstrap et DataTables CSS -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet"
         integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+    <link href="https://cdn.datatables.net/1.11.5/css/jquery.dataTables.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.datatables.net/1.11.5/css/jquery.dataTables.min.css" rel="stylesheet">
     <link href="../../ressources/dist_assets/plugins/custom/fullcalendar/fullcalendar.bundle.css" rel="stylesheet" type="text/css" />
     <link href="../../ressources/dist_assets/plugins/global/plugins.bundle.css" type="text/css" />
     <link href="../../ressources/dist_assets/css/style.bundle.css" rel="stylesheet" type="text/css" />
     <link href="../../ressources/dist_assets/css/style.css" rel="stylesheet" type="text/css" />
     <link href="../../ressources/dist_assets/plugins/custom/datatables/datatables.bundle.css" rel="stylesheet" type="text/css" />
+    <link href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css" rel="stylesheet">
     <link rel="stylesheet" href="../../css/style.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
-
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <style>
- 
-
-        .modal {
-            display: block;
-            position: fixed;
-            z-index: 2;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            overflow: auto;
-            background-color: rgba(0, 0, 0, 0.5);
-        }
-
-        .modal-content {
-            background-color: #fff;
-            margin: 10% auto;
-            margin-left: 30%;
-            padding: 50px;
-            border-radius: 12px;
-            max-width: 700px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-        }
-
-        .close {
-            color: #aaa;
-            float: right;
-            font-size: 28px;
-            font-weight: bold;
-            cursor: pointer;
-        }
-
-        .close:hover {
-            color: #000;
-        }
-
-        label {
-            display: block;
-            margin-top: 10px;
-            font-weight: bold;
-            color: #555;
-        }
-
-        select,
-        input[type="number"],
-        input[type="text"] {
-            width: 100%;
-            padding: 10px;
-            margin-top: 5px;
-            border-radius: 5px;
-            border: 1px solid #ccc;
-            transition: border-color 0.3s ease;
-            box-sizing: border-box;
-        }
-
-        select:focus,
-        input[type="number"]:focus,
-        input[type="text"]:focus {
-            border-color: #008CBA;
-            outline: none;
-        }
-
-
-       
-
-      
-    </style>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
+<style>
+    body{
+        flex-direction: column;
+        background-color: #f8f9fa;
+    }
+    #sales-table td, #sales-table th {
+    vertical-align: middle;
+    }
 
+    .btn-custom {
+        padding: 5px 10px;
+        font-size: 0.875rem;
+        border-radius: 0.3rem;
+    }
+
+    #searchInput, #filterStatus {
+        max-width: 300px;
+    }
+
+    .card-title {
+        font-size: 1rem;
+    }
+
+    .page-link {
+        cursor: pointer;
+    }
+
+    .table-actions button {
+            margin-right: 5px;
+        }
+        .title-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .title-bar h1 {
+            font-size: 24px;
+            color: #198754;
+        }
+
+        /* Couleur verte UAHB + style personnalisé */
+        .swal-custom {
+            background: #e8f6ec;
+            border: 2px solid #28a745;
+            border-radius: 12px;
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        .swal2-title {
+            color: #155724 !important;
+            font-weight: bold;
+        }
+
+        .swal2-icon-success {
+            color: #28a745 !important;
+            border-color: #28a745 !important;
+        }
+
+        .swal2-toast .swal2-title {
+            font-size: 16px;
+        }
+
+        /* Ajout du logo UAHB dans les popups non toast */
+        .swal2-popup:not(.swal2-toast)::before {
+            content: "";
+            background: url('../../ressources/img/logo_uahb.png') no-repeat center center;
+            background-size: 60px;
+            display: block;
+            margin: 0 auto 10px;
+            height: 60px;
+            width: 60px;
+            opacity: 0.9;
+        }
+
+</style>
 <body id="kt_body" class="header-fixed header-tablet-and-mobile-fixed toolbar-enabled toolbar-fixed aside-enabled aside-fixed" style="--kt-toolbar-height:55px;--kt-toolbar-height-tablet-and-mobile:55px ">
     <div class="d-flex flex-column flex-root">
         <div class="page d-flex flex-row flex-column-fluid">
@@ -219,6 +226,7 @@
                                 
                             </div>
                             
+                         
                             <div data-kt-menu-trigger="click" class="menu-item menu-accordion">
                                 <span class="menu-link">
                                     <span class="menu-icon">
@@ -378,8 +386,7 @@
                                         </a>
                                     </div>
                                    
-                                </div>
-                                
+                                </div>                         
                             </div>
 
                             <div data-kt-menu-trigger="click" class="menu-item menu-accordion">
@@ -462,7 +469,7 @@
                               
                                 
                             </div>
-                       
+                        
                         </div>
                     </div>
                 </div>
@@ -579,49 +586,168 @@
                         </div>
                     </div>
                 </div>
-            <div class="container">
-                <div class="button-container">
-                
-                    <button onclick="openModalButton()">Nouvelle
-                        Réception</button>
+
+                <h2 class="mb-4">Gestion des paiements des commandes</h2>
+
+                <!-- Cartes de statistiques -->
+                <div class="row mb-5 g-4">
+                    <div class="col-md-4">
+                        <div class="card shadow p-4 border-success bg-light">
+                        <div class="text-success fw-bold fs-4 mb-2">Commandes payées</div>
+                        <div class="fs-1 fw-bold" id="countValide">0</div>
+                        <button class="btn btn-success mt-3" onclick="chargerCommandes('validé')">Voir</button>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card shadow p-4 border-warning bg-light">
+                        <div class="text-warning fw-bold fs-4 mb-2">Commandes partiellement payées</div>
+                        <div class="fs-1 fw-bold" id="countPartielle">0</div>
+                        <button class="btn btn-warning mt-3" onclick="chargerCommandes('partielle')">Voir</button>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card shadow p-4 border-secondary bg-light">
+                        <div class=" fw-bold fs-4 mb-2">Commandes en attente de paiement</div>
+                        <div class="fs-1 fw-bold" id="countAttente">0</div>
+                        <button class="btn btn-secondary mt-3" onclick="chargerCommandes('en_attente')">Voir</button>
+                        </div>
+                    </div>
                 </div>
-                <table id="sales-table" class="table align-middle table-row-dashed fs-6 gy-5 " style="background-color: white;">
-                <thead>
-                    <tr class="text-start text-gray-400 fw-bolder fs-7 text-uppercase gs-0">
-                        <th></th>
-                        <th>Nom</th>
-                        <th>Date Creation</th>
-                        <th>Commande Associée</th>
-                        <th>Etat de la Livraison</th>
-                        <th>Action</th>
-                    </tr>
-                </thead>
-                <tbody class="text-gray-600 fw-bold"></tbody>
-            </table>
-        
-            </div>
 
-            <!-- Modal -->
-            <div id="productModal" class="modal d-none">
-                
-                <div class="modal-content">
-                    <span class="close">&times;</span>
-                    <form id="productForm" method="post" >
-                        <label for="product-name"><b>Commande :</b></label>
-                        <select class="form-select" id="product-name" name="bc" required>
-                            <option value="" selected>Sélectionnez une Commande</option>
-                        </select><br>
-
-                        <label for="nomBL"><b>Nom de la Livraison:</b></label>
-                        <input type="text" id="nomBL" name="nomBL" readonly required style="background-color: #e9ecef;"><br><br>
-
-                        <label for="bordereau"><b>Numero Bordereau_de_Livraison :</b></label>
-                    <input type="number" id="bordereau" name="bordereau" required><br><br>
-
-                        <button type="submit" class="btn btn-success" name="creer">Créer</button>
-                    </form>
+                <!-- Table des commandes -->
+                <div class="card shadow p-4">
+                    <h4 class="mb-3" id="titreTable">Liste des commandes</h4>
+                    <table id="tableCommandes" class="display" style="width:100%">
+                        <thead>
+                        <tr id="headerTable">
+                            <!-- colonnes dynamiques générées selon l'état -->
+                        </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
                 </div>
-            </div>
+
+                <!-- Modal Détails Paiement -->
+                <div class="modal fade" id="modalDetailsPaiement" tabindex="-1" aria-labelledby="modalDetailsLabel" aria-hidden="true">
+                    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+                        <div class="modal-content">
+                            <div class="modal-header bg-info text-white">
+                                <h5 class="modal-title" style="color: white;" id="modalDetailsLabel">Détails du paiement</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <p><strong>Numéro commande :</strong> <span id="detailNumero"></span></p>
+                                <p><strong>Montant total :</strong> <span id="detailMontantTotal"></span></p>
+                                <p><strong>Mode de règlement :</strong> <span id="detailMode"></span></p>
+                                <p><strong>Modalité de paiement :</strong> <span id="detailModalite"></span></p>
+
+                                <div id="sectionTranches" class="mt-4 d-none">
+                                    <h6>Historique des tranches :</h6>
+                                    <table class="table table-bordered">
+                                        <thead>
+                                        <tr>
+                                            <th>Numéro</th>
+                                            <th>Montant</th>
+                                            <th>Date</th>
+                                        </tr>
+                                        </thead>
+                                        <tbody id="tbodyTranches"></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <input type="hidden" id="etat_actuel" value="partielle">
+
+                <!-- Popup Modal Payer -->
+                <div class="modal fade" id="modalPayer" tabindex="-1" aria-labelledby="modalPayerLabel" aria-hidden="true">
+                <div class="modal-dialog modal-lg modal-dialog-centered">
+                    <div class="modal-content">
+                    <div class="modal-header bg-success text-white">
+                        <h5 class="modal-title" id="modalPayerLabel">Paiement de la commande</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fermer"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="formPaiement" enctype="multipart/form-data">
+                        <input type="hidden" name="id_commande" id="payer_id_commande">
+                        <div class="mb-3">
+                            <label class="form-label">Mode de règlement</label>
+                            <input type="text" class="form-control" id="payer_mode" readonly>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Modalité de paiement</label>
+                            <input type="text" class="form-control" id="payer_modalite" readonly>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Montant total</label>
+                            <input type="text" class="form-control" id="payer_montant" readonly>
+                        </div>
+
+                        <!-- Comptant par chèque/virement → banque + numéro -->
+                        <div id="groupe_banque" class="d-none">
+                            <div class="mb-3">
+                                <label class="form-label">Banque</label>
+                                <select class="form-select" id="banque" name="banque">
+                                    <option value="">-- Sélectionner --</option>
+                                    <option value="BANQUE INTERNATIONALE POUR LE COMMERCE ET L’INDUSTRIE DU SENEGAL">BANQUE INTERNATIONALE POUR LE COMMERCE ET L’INDUSTRIE DU SENEGAL</option>
+                                    <option value="BANK OF AFRICA">BANK OF AFRICA</option>
+                                    <option value="BANQUE ATLANTIQUE">BANQUE ATLANTIQUE</option>
+                                    <option value="BANQUE DE L’HABITAT DU SENEGAL">BANQUE DE L’HABITAT DU SENEGAL</option>
+                                    <option value="BANQUE DES INSTITUTIONS MUTUALISTES D’AFRIQUE DE L’OUEST">BANQUE DES INSTITUTIONS MUTUALISTES D’AFRIQUE DE L’OUEST</option>
+                                    <option value="BANQUE ISLAMIQUE DU SENEGAL">BANQUE ISLAMIQUE DU SENEGAL</option>
+                                    <option value="BANQUE REGIONALE DE MARCHES">BANQUE REGIONALE DE MARCHES</option>
+                                    <option value="BANQUE SAHELO-SAHARIENNE POUR L’INVESTISSEMENT ET LE COMMERCE">BANQUE SAHELO-SAHARIENNE POUR L’INVESTISSEMENT ET LE COMMERCE</option>
+                                    <option value="LA BANQUE AGRICOLE">LA BANQUE AGRICOLE</option>
+                                    <option value="GROUPE ATTIJARIWAFA BANK">GROUPE ATTIJARIWAFA BANK</option>
+                                    <option value="CITIBANK SENEGAL">CITIBANK SENEGAL</option>
+                                    <option value="CREDIT DU SENEGAL">CREDIT DU SENEGAL</option>
+                                    <option value="CREDIT INTERNATIONAL">CREDIT INTERNATIONAL</option>
+                                    <option value="BGFIBANK SENEGAL">BGFIBANK SENEGAL</option>
+                                    <option value="ECOBANK">ECOBANK</option>
+                                    <option value="FBNBANK SENEGAL">FBNBANK SENEGAL</option>
+                                    <option value="SOCIETE GENERALE SENEGAL">SOCIETE GENERALE SENEGAL</option>
+                                    <option value="UNITED BANK FOR AFRICA">UNITED BANK FOR AFRICA</option>
+                                    <option value="BANQUE NATIONALE POUR LE DEVELOPPEMENT ECONOMIQUE">BANQUE NATIONALE POUR LE DEVELOPPEMENT ECONOMIQUE</option>
+                                    <option value="BANQUE DE DAKAR">BANQUE DE DAKAR</option>
+                                    <option value="LA BANQUE OUTARDE">LA BANQUE OUTARDE</option>
+                                    <option value="CORIS BANK INTERNATIONAL">CORIS BANK INTERNATIONAL</option>
+                                    <option value="ORABANK">ORABANK</option>
+                                    <option value="BIZAO">BIZAO</option>
+                                    </select>
+                            </div>
+                            <div class="mb-3">
+                            <label class="form-label">N° Chèque / Virement</label>
+                            <input type="text" class="form-control" name="numero_cheque" id="numero_cheque">
+                            </div>
+                        </div>
+
+                        <!-- Mobile money (wave/om) → reçu -->
+                        <div id="groupe_recu" class="mb-3 d-none">
+                            <label class="form-label">Reçu de paiement (image)</label>
+                            <input type="file" class="form-control" id="input_recu" name="recu" accept="image/*">
+                        </div>
+
+                        <!-- Paiement par tranche -->
+                        <div id="groupe_tranche" class="mb-3 d-none">
+                            <label class="form-label">Montant de la tranche</label>
+                            <input type="number" class="form-control" id="input_tranche" name="montant_tranche">
+                            <div class="form-text text-muted" id="reste_affiche"></div>
+                        </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button id="btnValiderPaiement" class="btn btn-primary w-100 mt-3">Valider le paiement</button>
+                        <button class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    </div>
+                    </div>
+                </div>
+                </div>
+
     <div class="footer py-4 d-flex flex-lg-column" id="kt_footer">
                     <div class="container-fluid d-flex flex-column flex-md-row align-items-center justify-content-between">
                         <div class="text-dark order-2 order-md-1">
@@ -645,16 +771,19 @@
     <script src="../../ressources/dist_assets/plugins/global/plugins.bundle.js"></script>
     <script src="../../ressources/dist_assets/js/scripts.bundle.js"></script>
     <script src="../../ressources/dist_assets/plugins/custom/datatables/datatables.bundle.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
-    
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="../../js/caisse.js"></script>
+    <!-- SweetAlert2 -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script src="../../js/listeBonLivraison.js"></script>
-  
-
-    <!-- Inclure jQuery et DataTables -->
-
-  
+    <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
 
 </body>
-
 </html>

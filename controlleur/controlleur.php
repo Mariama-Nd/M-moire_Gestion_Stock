@@ -3553,5 +3553,212 @@ case 44:
                                                                     echo json_encode(['status' => 'error', 'message' => 'Erreur serveur']);
                                                                 }
                                                                 break;
+
+                                                                //nombre de commandes
+                                                                case 102:
+                                                                    try {
+                                                                        $db = $gc->getDb();
+                                                                        $query = "SELECT etat, COUNT(*) as total FROM CommandeAchat GROUP BY etat";
+                                                                        $stmt = $db->query($query);
+                                                                
+                                                                        $stats = [
+                                                                            'validé' => 0,
+                                                                            'partielle' => 0,
+                                                                            'en_attente' => 0
+                                                                        ];
+                                                                
+                                                                        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+                                                                            $etat = $row['etat'];
+                                                                            if (isset($stats[$etat])) {
+                                                                                $stats[$etat] = (int)$row['total'];
+                                                                            }
+                                                                        }
+                                                                
+                                                                        echo json_encode(["success" => true] + $stats);
+                                                                    } catch (Exception $e) {
+                                                                        echo json_encode(["success" => false, "message" => $e->getMessage()]);
+                                                                    }
+                                                                    break;                                                                
+                                                                    
+                                                                    // liste des commandes par état
+                                                                    case 103:
+                                                                        try {
+                                                                            $etat = $_POST['etat'] ?? 'validé';
+                                                                            $db = $gc->getDb();
+                                                                    
+                                                                            $query = "
+                                                                                SELECT ca.id, ca.numero, ca.nom, f.nomF, f.prenomF,
+                                                                                       ca.date_creation, ca.date_validation, ca.montant_total,
+                                                                                       ca.mode_reglement, ca.modalite_paiement
+                                                                                FROM CommandeAchat ca
+                                                                                LEFT JOIN fournisseur f ON f.idF = ca.id_fournisseur
+                                                                                WHERE ca.etat = :etat
+                                                                            ";
+                                                                    
+                                                                            $stmt = $db->prepare($query);
+                                                                            $stmt->execute(['etat' => $etat]);
+                                                                    
+                                                                            $commandes = [];
+                                                                    
+                                                                            while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+                                                                                $ligne = [
+                                                                                    $row['numero'],
+                                                                                    $row['nom'],
+                                                                                    $row['nomF'] . ' ' . $row['prenomF'],
+                                                                                    $row['date_creation'],
+                                                                                ];
+                                                                    
+                                                                                if ($etat === 'validé') {
+                                                                                    $ligne[] = $row['date_validation'] ?? '-';
+                                                                                    $ligne[] = number_format($row['montant_total'], 0, ',', ' ') . ' F';
+                                                                                    $ligne[] = '<button class="btn btn-sm btn-info btn-details" data-id="' . $row['id'] . '">Voir détails</button>';
+                                                                                } elseif ($etat === 'partielle') {
+                                                                                    // Calcul du montant versé
+                                                                                    $stmt2 = $db->prepare("SELECT SUM(montant) FROM PaiementCommande WHERE id_CommandeAchat = :id");
+                                                                                    $stmt2->execute(['id' => $row['id']]);
+                                                                                    $montant_verse = (float) ($stmt2->fetchColumn() ?: 0);
+                                                                                    $reste = $row['montant_total'] - $montant_verse;
+                                                                    
+                                                                                    $ligne[] = number_format($row['montant_total'], 0, ',', ' ') . ' F';
+                                                                                    $ligne[] = number_format($montant_verse, 0, ',', ' ') . ' F';
+                                                                                    $ligne[] = '<button class="btn btn-sm btn-warning btn-continuer" 
+                                                                                                data-id="' . $row['id'] . '" 
+                                                                                                data-montant="' . $row['montant_total'] . '" 
+                                                                                                data-mode="' . $row['mode_reglement'] . '" 
+                                                                                                data-modalite="' . $row['modalite_paiement'] . '" 
+                                                                                                data-reste="' . $reste . '">Continuer</button>';
+                                                                                } else { // en_attente
+                                                                                    $ligne[] = number_format($row['montant_total'], 0, ',', ' ') . ' F';
+                                                                                    $ligne[] = '<button class="btn btn-sm btn-success btn-payer" 
+                                                                                                data-id="' . $row['id'] . '" 
+                                                                                                data-montant="' . $row['montant_total'] . '" 
+                                                                                                data-mode="' . $row['mode_reglement'] . '" 
+                                                                                                data-modalite="' . $row['modalite_paiement'] . '" 
+                                                                                                data-reste="' . $row['montant_total'] . '">Payer</button>';
+                                                                                }
+                                                                    
+                                                                                $commandes[] = $ligne;
+                                                                            }
+                                                                    
+                                                                            // Colonnes dynamiques
+                                                                            if ($etat === 'validé') {
+                                                                                $colonnes = [
+                                                                                    ["title" => "Numéro"],
+                                                                                    ["title" => "Nom"],
+                                                                                    ["title" => "Fournisseur"],
+                                                                                    ["title" => "Date création"],
+                                                                                    ["title" => "Date validation"],
+                                                                                    ["title" => "Montant"],
+                                                                                    ["title" => "Action"],
+                                                                                ];
+                                                                            } elseif ($etat === 'partielle') {
+                                                                                $colonnes = [
+                                                                                    ["title" => "Numéro"],
+                                                                                    ["title" => "Nom"],
+                                                                                    ["title" => "Fournisseur"],
+                                                                                    ["title" => "Date création"],
+                                                                                    ["title" => "Montant total"],
+                                                                                    ["title" => "Montant versé"],
+                                                                                    ["title" => "Action"],
+                                                                                ];
+                                                                            } else {
+                                                                                $colonnes = [
+                                                                                    ["title" => "Numéro"],
+                                                                                    ["title" => "Nom"],
+                                                                                    ["title" => "Fournisseur"],
+                                                                                    ["title" => "Date création"],
+                                                                                    ["title" => "Montant total"],
+                                                                                    ["title" => "Action"],
+                                                                                ];
+                                                                            }
+                                                                    
+                                                                            echo json_encode([
+                                                                                "success" => true,
+                                                                                "commandes" => $commandes,
+                                                                                "colonnes" => $colonnes
+                                                                            ]);
+                                                                        } catch (Exception $e) {
+                                                                            echo json_encode(["success" => false, "message" => $e->getMessage()]);
+                                                                        }
+                                                                        break;                                                                                                                                        
+                                                                        
+                                                                        //voir details
+                                                                        case 104:
+                                                                            try {
+                                                                              $id = $_POST['id'] ?? null;
+                                                                              if (!$id) throw new Exception("ID manquant");
+                                                                          
+                                                                              $db = $gc->getDb();
+                                                                          
+                                                                              // Récupération des infos principales
+                                                                              $stmt = $db->prepare("SELECT numero, montant_total, mode_reglement, modalite_paiement FROM CommandeAchat WHERE id = ?");
+                                                                              $stmt->execute([$id]);
+                                                                              $commande = $stmt->fetch(PDO::FETCH_ASSOC);
+                                                                          
+                                                                              if (!$commande) throw new Exception("Commande introuvable");
+                                                                          
+                                                                              // Historique des paiements
+                                                                              $stmt2 = $db->prepare("SELECT montant, date_paiement FROM PaiementCommande WHERE id_CommandeAchat = ? ORDER BY date_paiement ASC");
+                                                                              $stmt2->execute([$id]);
+                                                                              $tranches = $stmt2->fetchAll(PDO::FETCH_ASSOC);
+                                                                          
+                                                                              echo json_encode([
+                                                                                "success" => true,
+                                                                                "numero" => $commande['numero'],
+                                                                                "montant_total" => number_format($commande['montant_total'], 0, ',', ' '),
+                                                                                "mode_reglement" => $commande['mode_reglement'],
+                                                                                "modalite_paiement" => $commande['modalite_paiement'],
+                                                                                "tranches" => $tranches
+                                                                              ]);
+                                                                            } catch (Exception $e) {
+                                                                              echo json_encode(["success" => false, "message" => $e->getMessage()]);
+                                                                            }
+                                                                            break;
+                                                                            
+                                                                            case 105:
+                                                                                try {
+                                                                                    $id = $_POST["id_commande"] ?? null;
+                                                                                    $montant = isset($_POST["montant"]) ? (float) $_POST["montant"] : 0;
+                                                                                    $banque = trim($_POST["banque"] ?? '');
+                                                                                    $recu = trim($_POST["recu"] ?? '');
+                                                                            
+                                                                                    if (!$id || $montant <= 0) {
+                                                                                        throw new Exception("Informations de paiement incomplètes.");
+                                                                                    }
+                                                                            
+                                                                                    $db = $gc->getDb();
+                                                                            
+                                                                                    // Insertion du paiement
+                                                                                    $stmt = $db->prepare("INSERT INTO PaiementCommande (id_CommandeAchat, montant, banque, recu, date_paiement) VALUES (?, ?, ?, ?, NOW())");
+                                                                                    $stmt->execute([$id, $montant, $banque, $recu]);
+                                                                            
+                                                                                    // Récupération du total à payer
+                                                                                    $stmt = $db->prepare("SELECT montant_total FROM CommandeAchat WHERE id = ?");
+                                                                                    $stmt->execute([$id]);
+                                                                                    $total = (float)$stmt->fetchColumn();
+                                                                            
+                                                                                    // Total payé
+                                                                                    $stmt = $db->prepare("SELECT SUM(montant) FROM PaiementCommande WHERE id_CommandeAchat = ?");
+                                                                                    $stmt->execute([$id]);
+                                                                                    $paye = (float)$stmt->fetchColumn();
+                                                                            
+                                                                                    // Mise à jour de l'état
+                                                                                    if ($paye >= $total) {
+                                                                                        $stmt = $db->prepare("UPDATE CommandeAchat SET etat = 'validé', date_validation = NOW() WHERE id = ?");
+                                                                                        $stmt->execute([$id]);
+                                                                                    } elseif ($paye > 0 && $paye < $total) {
+                                                                                        $stmt = $db->prepare("UPDATE CommandeAchat SET etat = 'partielle' WHERE id = ?");
+                                                                                        $stmt->execute([$id]);
+                                                                                    }
+                                                                            
+                                                                                    echo json_encode(["success" => true]);
+                                                                                } catch (Exception $e) {
+                                                                                    echo json_encode([
+                                                                                        'success' => false,
+                                                                                        'message' => $e->getMessage()
+                                                                                    ]);
+                                                                                }
+                                                                                break;                                                                                                                                                                                                                                                                                                                
+                                                              
                                 }
                                 ?>
