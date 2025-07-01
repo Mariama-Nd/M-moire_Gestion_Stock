@@ -25,7 +25,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     },
                     paging: true,
                     pageLength: 5,
-                    lengthChange: false,
+                    lengthChange: true,
                     ordering: true,
                     autoWidth: false
                 });
@@ -127,10 +127,18 @@ function getActions(livraison) {
 }
 
 function openModalButton() {
-    const modal = document.getElementById("productModal");
-    modal.classList.remove("d-none");
-    modal.classList.add("d-block");
+    const modalEl = document.getElementById("productModal");
+    const modalInstance = new bootstrap.Modal(modalEl);
 
+    // Réinitialise le formulaire à chaque affichage
+    modalEl.addEventListener('shown.bs.modal', () => {
+        document.getElementById('productForm').reset();
+        document.getElementById('nomBL').value = '';
+    }, { once: true }); // 👈 évite les doublons si on ouvre plusieurs fois
+
+    modalInstance.show();
+
+    // Remplir la liste des bons de commande
     fetch('../../controlleur/controlleur.php?option=21')
         .then(response => response.json())
         .then(data => {
@@ -150,48 +158,35 @@ function openModalButton() {
                 title: 'Erreur',
                 text: 'Erreur lors de la récupération des bons de commande.',
             }).then(() => {
-                openModalButton();
+                modalInstance.show();
             });
         });
 
-        document.getElementById('product-name').addEventListener('change', function () {
-            const idBC = this.value;
-            if (!idBC) return;
-        
-            fetch(`../../controlleur/controlleur.php?option=101&idBC=${idBC}`)
-                .then(response => response.json())
-                .then(data => {
-                    if (data.status === "success") {
-                        const numero = data.next;
-                        const nomBC = data.nomBC;
-                        const generatedName = `${nomBC} - Livraison ${numero}`;
-                        document.getElementById('nomBL').value = generatedName;
-                    } else {
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'Erreur',
-                            text: data.message
-                        });
-                    }
-                })
-                .catch(error => {
-                    console.error("Erreur lors de la génération du nom de livraison :", error);
-                });
-        });                
-}
-const closeButton = document.getElementsByClassName("close")[0];
-closeButton.onclick = function () {
-    const modal = document.getElementById("productModal");
-    modal.classList.remove("d-block");
-    modal.classList.add("d-none");
-}
+    // Générer automatiquement le nom de la livraison
+    document.getElementById('product-name').addEventListener('change', function () {
+        const idBC = this.value;
+        if (!idBC) return;
 
-window.onclick = function (event) {
-    const modal = document.getElementById("productModal");
-    if (event.target == modal) {
-        modal.classList.remove("d-block");
-        modal.classList.add("d-none");
-    }
+        fetch(`../../controlleur/controlleur.php?option=101&idBC=${idBC}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === "success") {
+                    const numero = data.next;
+                    const nomBC = data.nomBC;
+                    const generatedName = `${nomBC} - Livraison ${numero}`;
+                    document.getElementById('nomBL').value = generatedName;
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erreur',
+                        text: data.message
+                    });
+                }
+            })
+            .catch(error => {
+                console.error("Erreur lors de la génération du nom de livraison :", error);
+            });
+    });
 }
 
 function validerBL(idBL) {

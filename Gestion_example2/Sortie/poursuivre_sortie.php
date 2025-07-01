@@ -16,24 +16,49 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <title>Bon de Sortie</title>
     <style>
-       
+        /* ===== POLICES GÉNÉRALES ET BODY ===== */
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #f8f9fa;
+            color: #212529;
+        }
+
+        .page-wrapper {
+            padding: 60px 20px;
+        }
 
         form {
             background-color: #fff;
             border-radius: 12px;
             box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
-            padding: 30px;
+            padding: 40px;
             width: 100%;
-            max-width: 1100px;
+            max-width: 1300px;
             box-sizing: border-box;
+            margin: auto;
             transition: all 0.3s ease;
+            font-size: 17px;
         }
 
-        h1,
-        h3 {
+        .page-header {
+            background-color: #e9f5ee;
+            border: 1px solid #cde4d4;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .page-header h1 {
             color: #2e7d32;
-            font-family: 'Helvetica Neue', sans-serif;
-            margin-bottom: 20px;
+            font-weight: 600;
+            font-size: 32px;
+            margin: 0;
+        }
+
+        h2 {
+            font-size: 26px;
+            font-weight: 600;
+            color: #2e7d32;
+            margin-bottom: 15px;
         }
 
         label,
@@ -46,123 +71,218 @@
 
         select,
         input[type="number"] {
-            padding: 10px;
+            padding: 12px;
             border: 1px solid #ddd;
             border-radius: 6px;
             font-size: 16px;
             box-sizing: border-box;
         }
 
-        .product-item {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 20px;
-            /* Augmenter l'espace entre les éléments */
-            padding: 15px;
-            background-color: #f9fafb;
-            border: 1px solid #e0e0e0;
-            border-radius: 8px;
-            box-sizing: border-box;
-        }
-
-        /* Réduire l'espace entre le label et l'input pour la quantité */
-        .product-item label {
-            margin-right: 0px;
-            /* Réduire l'espace entre le label et les inputs */
-            margin-left: 10px;
-        }
-
-        .product-item input[type="number"] {
-            margin-right: 15px;
-            /* Espace entre l'input et les boutons */
-        }
-
-        .product-item button {
-            margin-left: 10px;
-            /* Espace entre les boutons */
-        }
-
-      
-        .btn-secondary {
-            background-color: #28a745;
-            /* Vert */
-            color: white;
-            padding: 12px 20px;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 16px;
-            text-align: center;
-            text-decoration: none;
-            margin: 10px 0;
-            transition: background-color 0.3s ease;
-        }
-
-        .btn-secondary:hover {
-            background-color: #218838;
-            /* Vert foncé */
-        }
-
-        button.modify {
-            background-color: #ffa726;
-        }
-
-        button.modify:hover {
-            background-color: #fb8c00;
-        }
-
-        button.delete {
-            background-color: #e53935;
-        }
-
-        button.delete:hover {
-            background-color: #d32f2f;
-        }
-
+        /* ----- Produits ----- */
         .product-list {
             margin-top: 30px;
         }
 
-        .card-body {
-            background-color: #f9f9f9;
-            border-radius: 8px;
+        .product-item {
+            padding: 20px;
+            background-color: #ffffff;
+            border: 1px solid #ddd;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+            font-family: 'Poppins', sans-serif;
+            font-size: 16px;
+            transition: box-shadow 0.2s ease;
         }
 
+        .product-item:hover {
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.05);
+        }
+
+        .card-body {
+            background-color: #f8f9fa;
+            border-radius: 10px;
+            border: 1px solid #dee2e6;
+            padding: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .product-info {
+            flex: 1;
+            min-width: 220px;
+        }
+
+        .product-name {
+            font-size: 20px;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 6px;
+        }
+
+        .product-stats {
+            display: flex;
+            gap: 18px;
+            flex-wrap: wrap;
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .stat {
+            display: inline-block;
+            font-family: 'Poppins', sans-serif;
+            line-height: 1.4;
+        }
+
+        .stat-commande strong {
+            color: #2e7d32;
+        }
+
+        .stat-livre strong {
+            color: #198754;
+        }
+
+        .stat-reste strong {
+            color: #dc3545;
+        }
+
+        .stat-stock strong {
+            color: #0d6efd;
+        }
+
+        /* ----- Boutons ----- */
+        .btn {
+            padding: 10px 20px;
+            font-size: 16px;
+            font-weight: 600;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-success {
+            background-color: #198754;
+            color: white;
+            border: none;
+        }
+
+        .btn-warning {
+            background-color: #fd7e14;
+            color: white;
+            border: none;
+        }
+
+        .btn-danger {
+            background-color: #dc3545;
+            color: white;
+            border: none;
+        }
+
+        .btn-primary {
+            background-color: #0d6efd;
+            color: white;
+            border: none;
+        }
+
+        .btn-secondary {
+            background-color: #6c757d;
+            color: white;
+            padding: 10px 18px;
+            font-size: 16px;
+            border: none;
+            border-radius: 6px;
+            text-decoration: none;
+        }
+
+        .btn-secondary:hover {
+            background-color: #5a6268;
+        }
+
+        #enregistrerTout {
+            margin-top: 30px;
+            padding: 14px 30px;
+            font-weight: 600;
+            border-radius: 8px;
+            background-color: #2e7d32;
+            color: white;
+            font-size: 18px;
+            transition: background-color 0.2s ease;
+        }
+
+        #enregistrerTout:hover {
+            background-color: #256429;
+        }
+
+        /* ----- Inputs ----- */
         .form-group {
             display: flex;
             flex-direction: column;
-            margin-bottom: 0;
+            min-width: 140px;
         }
 
         .form-group .form-control,
         .form-group .form-select {
-            height: 36px;
-            font-size: 14px;
+            font-size: 16px;
+            height: 44px;
+            min-width: 130px;
         }
 
-        .btn {
-            height: 36px;
+        .product-controls label {
             font-size: 14px;
-            line-height: 1;
-            padding: 0 14px;
+            font-weight: 500;
+            color: #333;
         }
 
+        /* ----- Scroll ----- */
+        #productListScrollable {
+            max-height: 550px;
+            overflow-y: auto;
+            padding: 10px;
+            border: 1px solid #dee2e6;
+            border-radius: 10px;
+            background-color: #fff;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+        }
+
+        #productListScrollable::-webkit-scrollbar {
+            width: 8px;
+        }
+        #productListScrollable::-webkit-scrollbar-thumb {
+            background-color: #b2dfdb;
+            border-radius: 8px;
+        }
+
+        /* ----- Responsive ----- */
         @media (max-width: 768px) {
             form {
                 padding: 20px;
                 max-width: 100%;
             }
 
-            .product-item {
+            .card-body {
                 flex-direction: column;
                 align-items: flex-start;
             }
 
-            button,
+            .product-stats {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .btn,
             a {
                 width: 100%;
                 margin: 10px 0;
+            }
+
+            .page-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 12px;
             }
         }
     </style>
@@ -634,17 +754,32 @@
                         </div>
                     </div>
                 </div>
-                <form id="bonForm" method="post">
-        
-       
-        <div id="productList" class="product-list">
-        <!-- PRODUITS -->
-            
-        </div>
-        
-        <div id="productListNE"></div>
-        <button type="button" class="btn btn-success" id="enregistrerTout">Enregistrer Tout</button>
-    </form>
+
+                <div class="page-wrapper d-flex justify-content-center align-items-start py-5">
+                    <div class="container" style="max-width: 1200px;">
+                        <form id="bonForm" method="post" class="p-4 bg-white rounded shadow-sm">
+                            <!-- En-tête -->
+                            <div class="page-header d-flex justify-content-between align-items-center px-4 py-3 mb-4 shadow-sm">
+                                <h1 class="mb-0">📦 <b>Sortie de stock - Poursuivre</b></h1>
+                                <a href='Liste_bon_sortie.php' class="btn btn-secondary">&larr; Retour</a>
+                            </div>
+
+                            <!-- Liste des produits -->
+                            <div id="productList" class="product-list mt-4">
+                                <h2 class="mb-3">Produits concernés</h2>
+                                <div id="productListScrollable">
+                                    <!-- Produits injectés dynamiquement -->
+                                </div>
+                            </div>
+
+                            <!-- Bouton global -->
+                            <button type="button" class="btn btn-success d-block mx-auto" id="enregistrerTout">
+                                ✅ Enregistrer Tout
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
     <div class="footer py-4 d-flex flex-lg-column" id="kt_footer">
                     <div class="container-fluid d-flex flex-column flex-md-row align-items-center justify-content-between">
                         <div class="text-dark order-2 order-md-1">

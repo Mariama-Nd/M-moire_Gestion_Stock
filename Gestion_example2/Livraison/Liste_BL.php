@@ -8,7 +8,6 @@
 
 
     <!-- Inclure Bootstrap et DataTables CSS -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet"
         integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
     <link href="https://cdn.datatables.net/1.11.5/css/jquery.dataTables.min.css" rel="stylesheet">
@@ -16,39 +15,29 @@
     <link href="../../ressources/dist_assets/plugins/global/plugins.bundle.css" type="text/css" />
     <link href="../../ressources/dist_assets/css/style.bundle.css" rel="stylesheet" type="text/css" />
     <link href="../../ressources/dist_assets/css/style.css" rel="stylesheet" type="text/css" />
-    <link href="../../ressources/dist_assets/plugins/custom/datatables/datatables.bundle.css" rel="stylesheet" type="text/css" />
-    <link rel="stylesheet" href="../../css/style.css">
+    <link href="../../ressources/dist_assets/plugins/custom/datatables/datatables.bundle.css" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
 
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
- 
 
-        .modal {
-            display: block;
-            position: fixed;
-            z-index: 2;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            overflow: auto;
-            background-color: rgba(0, 0, 0, 0.5);
-        }
-
+        /* MODAL contenu centré avec effet Bootstrap */
         .modal-content {
-            background-color: #fff;
-            margin: 10% auto;
-            margin-left: 30%;
-            padding: 50px;
-            border-radius: 12px;
-            max-width: 700px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            background-color: #ffffff;
+            margin: 5% auto;
+            padding: 30px;
+            border-radius: 10px;
+            max-width: 600px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
+            position: relative;
         }
 
+        /* BOUTON de fermeture */
         .close {
             color: #aaa;
-            float: right;
+            position: absolute;
+            top: 15px;
+            right: 20px;
             font-size: 28px;
             font-weight: bold;
             cursor: pointer;
@@ -58,36 +47,65 @@
             color: #000;
         }
 
+        /* LIBELLÉS */
         label {
             display: block;
-            margin-top: 10px;
-            font-weight: bold;
-            color: #555;
+            margin-top: 15px;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #333;
         }
 
+        /* CHAMPS de formulaire */
         select,
         input[type="number"],
         input[type="text"] {
             width: 100%;
-            padding: 10px;
-            margin-top: 5px;
-            border-radius: 5px;
-            border: 1px solid #ccc;
-            transition: border-color 0.3s ease;
-            box-sizing: border-box;
+            padding: 10px 12px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            border: 1px solid #ced4da;
+            font-size: 14px;
+            background-color: #f8f9fa;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
         }
 
+        /* ÉTAT FOCUS */
         select:focus,
         input[type="number"]:focus,
         input[type="text"]:focus {
-            border-color: #008CBA;
+            border-color: #198754; /* Vert Bootstrap */
+            box-shadow: 0 0 0 0.25rem rgba(25, 135, 84, 0.25);
+            background-color: #fff;
             outline: none;
         }
 
+        /* BOUTON dans la modale */
+        .modal-content .btn {
+            padding: 10px 20px;
+            font-weight: 500;
+        }
 
-       
+        /* Centrer colonne NOM */
+        #sales-table th:nth-child(2),
+        #sales-table td:nth-child(2) {
+            text-align: center !important;
+        }
 
-      
+        /* Agrandir le titre */
+        h3.text-success {
+            font-size: 1.75rem;
+            font-weight: 700;
+        }
+
+        /* POUR EVITER LA DÉFORMATION DES MODALES PETITES ÉCRANS */
+        @media (max-width: 768px) {
+            .modal-content {
+                margin: 10% auto;
+                width: 90%;
+                padding: 20px;
+            }
+        }     
     </style>
 </head>
 
@@ -579,49 +597,62 @@
                         </div>
                     </div>
                 </div>
-            <div class="container">
-                <div class="button-container">
-                
-                    <button onclick="openModalButton()">Nouvelle
-                        Réception</button>
+            <!-- Contenu principal -->
+            <div class="container bg-white shadow p-4 rounded mt-4">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h3 class="text-success">Liste des livraisons</h3>
+                    <button class="btn btn-success" onclick="openModalButton()">➕ Nouvelle Réception</button>
                 </div>
-                <table id="sales-table" class="table align-middle table-row-dashed fs-6 gy-5 " style="background-color: white;">
-                <thead>
-                    <tr class="text-start text-gray-400 fw-bolder fs-7 text-uppercase gs-0">
-                        <th></th>
-                        <th>Nom</th>
-                        <th>Date Creation</th>
-                        <th>Commande Associée</th>
-                        <th>Etat de la Livraison</th>
-                        <th>Action</th>
-                    </tr>
-                </thead>
-                <tbody class="text-gray-600 fw-bold"></tbody>
-            </table>
-        
+
+                <table id="sales-table" class="table table-bordered table-striped w-100 align-middle">
+                    <thead class="table-success">
+                        <tr class="text-uppercase text-center">
+                            <th></th>
+                            <th>Nom</th>
+                            <th>Date Création</th>
+                            <th>Commande Associée</th>
+                            <th>État de la Livraison</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody class="text-center"></tbody>
+                </table>
             </div>
 
-            <!-- Modal -->
-            <div id="productModal" class="modal d-none">
-                
+            <!-- Modal Création Livraison -->
+            <div class="modal fade" id="productModal" tabindex="-1" aria-labelledby="modalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
                 <div class="modal-content">
-                    <span class="close">&times;</span>
-                    <form id="productForm" method="post" >
-                        <label for="product-name"><b>Commande :</b></label>
+                <form id="productForm" method="post">
+                    <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title" id="modalLabel">Nouvelle Réception</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="product-name" class="form-label">Commande</label>
                         <select class="form-select" id="product-name" name="bc" required>
-                            <option value="" selected>Sélectionnez une Commande</option>
-                        </select><br>
-
-                        <label for="nomBL"><b>Nom de la Livraison:</b></label>
-                        <input type="text" id="nomBL" name="nomBL" readonly required style="background-color: #e9ecef;"><br><br>
-
-                        <label for="bordereau"><b>Numero Bordereau_de_Livraison :</b></label>
-                    <input type="number" id="bordereau" name="bordereau" required><br><br>
-
-                        <button type="submit" class="btn btn-success" name="creer">Créer</button>
-                    </form>
+                        <option value="">Sélectionnez une Commande</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="nomBL" class="form-label">Nom de la Livraison</label>
+                        <input type="text" id="nomBL" name="nomBL" readonly required class="form-control bg-light">
+                    </div>
+                    <div class="mb-3">
+                        <label for="bordereau" class="form-label">N° Bordereau de Livraison</label>
+                        <input type="number" id="bordereau" name="bordereau" required class="form-control">
+                    </div>
+                    </div>
+                    <div class="modal-footer">
+                    <button type="submit" class="btn btn-success">Créer</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    </div>
+                </form>
                 </div>
             </div>
+            </div>
+
     <div class="footer py-4 d-flex flex-lg-column" id="kt_footer">
                     <div class="container-fluid d-flex flex-column flex-md-row align-items-center justify-content-between">
                         <div class="text-dark order-2 order-md-1">
@@ -646,8 +677,8 @@
     <script src="../../ressources/dist_assets/js/scripts.bundle.js"></script>
     <script src="../../ressources/dist_assets/plugins/custom/datatables/datatables.bundle.js"></script>
     <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
-    
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="../../js/listeBonLivraison.js"></script>
   
 

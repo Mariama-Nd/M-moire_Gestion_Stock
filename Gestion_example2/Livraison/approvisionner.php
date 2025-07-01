@@ -27,77 +27,181 @@ $nomBL = $_GET['nomBL'];
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <title>Bon de Commande</title>
     <style>
-   
-
-        form {
-            background-color: #fff;
-            border-radius: 12px;
-            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
-            padding: 30px;
-            width: 100%;
-            max-width: 1100px;
-            box-sizing: border-box;
-            transition: all 0.3s ease;
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #f8f9fa;
         }
 
-        h1,
-        h2 {
+        .container {
+            padding-top: 30px;
+            padding-bottom: 40px;
+        }
+
+        h1 {
             color: #2e7d32;
-            font-family: 'Helvetica Neue', sans-serif;
-            margin-bottom: 20px;
+            font-weight: 600;
+            font-size: 26px;
+            margin: 0;
         }
 
-        label,
-        select,
-        input[type="number"] {
-            display: block;
-            width: 100%;
-            margin-bottom: 15px;
-        }
-
-        select,
-        input[type="number"] {
-            padding: 10px;
-            border: 1px solid #ddd;
+        .btn-secondary {
+            background-color: #6c757d;
+            color: white;
+            padding: 8px 18px;
+            font-size: 15px;
+            border: none;
             border-radius: 6px;
-            font-size: 16px;
-            box-sizing: border-box;
+            text-decoration: none;
+            transition: background-color 0.2s ease;
+        }
+
+        .btn-secondary:hover {
+            background-color: #5a6268;
+        }
+
+        .page-header {
+            background-color: #e9f5ee; /* vert clair pastel */
+            border: 1px solid #cde4d4;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .page-header h1 {
+            color: #2e7d32;
+            font-weight: 600;
+            font-size: 26px;
         }
 
         .product-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 20px;
+        background-color: #ffffff;
+        border: 1px solid #ddd;
+        border-radius: 10px;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+        font-family: 'Poppins', sans-serif;
+        font-size: 16px;
+    }
+
+    .product-name {
+        font-size: 17px;
+        font-weight: 600;
+        color: #333;
+    }
+
+    .product-item small {
+        font-size: 15px;
+        color: #388e3c;
+        font-weight: 500;
+        margin-left: 5px;
+    }
+
+    input[type="number"],
+    select.product-unite {
+        font-size: 16px;
+        padding: 10px;
+    }
+
+    .product-item button {
+        font-size: 15px;
+        font-weight: 600;
+        padding: 8px 14px;
+        border-radius: 6px;
+        border: none;
+    }
+
+        .product-info {
+            flex: 1;
+            min-width: 280px;
+        }
+
+        .product-info label {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 4px;
+            display: block;
+        }
+
+        .product-info small {
+            display: inline-block;
+            margin-top: 6px;
+            font-size: 13px;
+            color: #6c757d;
+        }
+
+        .product-controls {
             display: flex;
+            flex-wrap: wrap;
             align-items: center;
-            justify-content: space-between;
-            margin-bottom: 20px;
-            padding: 15px;
-            background-color: #f9fafb;
-            border: 1px solid #e0e0e0;
+            gap: 10px;
+            min-width: 360px;
+            justify-content: end;
+        }
+
+        .product-controls input[type="number"],
+        .product-controls select {
+            width: 140px;
+            padding: 8px 10px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+            background: #fff;
+        }
+
+        .product-controls button {
+            padding: 8px 16px;
+            font-size: 14px;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            color: #fff;
+            white-space: nowrap;
+        }
+
+        .partielle-save {
+            background-color: #198754;
+        }
+
+        .modify {
+            background-color: #fd7e14;
+        }
+
+        .delete {
+            background-color: #dc3545;
+        }
+
+        #enregistrerTout {
+            margin-top: 30px;
+            padding: 12px 28px;
+            font-weight: 600;
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        #productListScrollable {
+            max-height: 500px; /* Limite l’espace visible */
+            overflow-y: auto;
+            padding-right: 10px;
+            padding-left: 5px;
+            border: 1px solid #dee2e6;
+            border-radius: 10px;
+            background-color: #fff;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+        }
+
+        /* Empêche le scroll de la page pendant le scroll interne */
+        #productListScrollable::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        #productListScrollable::-webkit-scrollbar-thumb {
+            background-color: #b2dfdb;
             border-radius: 8px;
-            box-sizing: border-box;
         }
-
-        .product-item label {
-            margin-right: 0px;
-            /* Réduire l'espace entre le label et l'input */
-            margin-left: 10px;
-        }
-
-        .product-item input[type="number"] {
-            margin-right: 15px;
-            /* Espace entre l'input et les boutons */
-        }
-
-        .product-item button {
-            margin-left: 10px;
-            /* Espace entre les boutons */
-        }
-
-      
-      
-
-     
-
-
     </style>
 </head>
 
@@ -556,15 +660,23 @@ $nomBL = $_GET['nomBL'];
                     </div>
                 </div>
 
-                <div class="container">
+                <div class="container py-4">
                     <form id="bonForm" method="post">
-                        <a href='Liste_BL.php' class="btn-secondary">Retour</a><br><br>
-                        <h1>Bon de Livraison: <?php echo '<b>' . $nomBL . '</b>'; ?></h1>
-                        <div id="productList" class="product-list">
-                            <h2>Produits</h2>
-                            <!-- Les produits seront chargés ici via AJAX -->
+                    <div class="page-header d-flex justify-content-between align-items-center px-4 py-3 mb-4 shadow-sm">
+                        <h1 class="mb-0">Bon de Livraison: <?php echo '<b>' . $nomBL . '</b>'; ?></h1>
+                        <a href='Liste_BL.php' class="btn btn-secondary">&larr; Retour</a>
+                    </div>
+
+                    <div id="productList" class="product-list mt-4">
+                        <h2 class="mb-3">Produits</h2>
+                        <div id="productListScrollable">
+                            <!-- Les produits (cards) seront injectés ici via AJAX -->
                         </div>
-                        <button type="button" class="btn btn-success" name="enregistrerTout" id="enregistrerTout">Enregistrer Tout</button>
+                    </div>
+
+                        <button type="button" class="btn btn-success d-block mx-auto" id="enregistrerTout">
+                            Enregistrer Tout
+                        </button>
                     </form>
                 </div>
                 

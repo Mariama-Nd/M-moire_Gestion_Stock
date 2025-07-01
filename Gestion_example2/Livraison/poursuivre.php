@@ -1,11 +1,6 @@
 <?php
-session_start();
-
-
-
-$nomBL = $_GET["nomBL"];
-
-
+    session_start();
+    $nomBL = $_GET["nomBL"];
 ?>
 
 <!DOCTYPE html>
@@ -23,195 +18,177 @@ $nomBL = $_GET["nomBL"];
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <title>Poursuivre Approvisionnement</title>
     <style>
-       
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #f8f9fa;
+            color: #212529;
+        }
 
-        form {
-            background-color: #fff;
+        .page-header {
+            background-color: #e9f5ee;
+            border: 1px solid #cde4d4;
             border-radius: 12px;
-            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
-            padding: 30px;
-            width: 100%;
-            max-width: 1100px;
-            box-sizing: border-box;
-            transition: all 0.3s ease;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
         }
 
-        h1,
-        h3 {
+        .page-header h1 {
             color: #2e7d32;
-            font-family: 'Helvetica Neue', sans-serif;
-            margin-bottom: 20px;
+            font-weight: 600;
+            font-size: 26px;
+            margin: 0;
         }
 
-        label,
-        select,
-        input[type="number"] {
-            display: block;
-            width: 100%;
-            margin-bottom: 15px;
-        }
-
-        select,
-        input[type="number"] {
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 6px;
-            font-size: 16px;
-            box-sizing: border-box;
-        }
-
-        .product-item {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 20px;
-            /* Augmenter l'espace entre les éléments */
-            padding: 15px;
-            background-color: #f9fafb;
-            border: 1px solid #e0e0e0;
-            border-radius: 8px;
-            box-sizing: border-box;
-        }
-
-        /* Réduire l'espace entre le label et l'input pour la quantité */
-        .product-item label {
-            margin-right: 0px;
-            /* Réduire l'espace entre le label et les inputs */
-            margin-left: 10px;
-        }
-
-        .product-item input[type="number"] {
-            margin-right: 15px;
-            /* Espace entre l'input et les boutons */
-        }
-
-        .product-item button {
-            margin-left: 10px;
-            /* Espace entre les boutons */
-        }
-
-      
         .btn-secondary {
-            background-color: #28a745;
-            /* Vert */
+            background-color: #6c757d;
             color: white;
-            padding: 12px 20px;
+            padding: 8px 18px;
+            font-size: 15px;
             border: none;
             border-radius: 6px;
-            cursor: pointer;
-            font-size: 16px;
-            text-align: center;
             text-decoration: none;
-            margin: 10px 0;
-            transition: background-color 0.3s ease;
+            transition: background-color 0.2s ease;
         }
 
         .btn-secondary:hover {
-            background-color: #218838;
-            /* Vert foncé */
+            background-color: #5a6268;
         }
 
-        button.modify {
-            background-color: #ffa726;
+        h2 {
+            font-size: 22px;
+            font-weight: 600;
+            color: #2e7d32;
         }
 
-        button.modify:hover {
-            background-color: #fb8c00;
+        /* ---- Zone produit ---- */
+        .product-item {
+            padding: 20px;
+            background-color: #ffffff;
+            border: 1px solid #ddd;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+            font-family: 'Poppins', sans-serif;
+            font-size: 16px;
+            transition: box-shadow 0.2s ease;
         }
 
-        button.delete {
-            background-color: #e53935;
+        .product-item:hover {
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.05);
         }
 
-        button.delete:hover {
-            background-color: #d32f2f;
+        .product-name {
+            font-size: 18px;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 4px;
         }
 
-        .product-list {
-            margin-top: 30px;
+        .product-controls .form-control,
+        .product-controls .form-select {
+            min-width: 130px;
+            font-size: 15px;
         }
 
-        .product-card-body {
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
-            background: #f9f9f9;
-            padding: 1rem;
+        .product-controls label {
+            font-size: 14px;
+            font-weight: 500;
+            color: #333;
+        }
+
+        .btn-success {
+            background-color: #198754;
+            border: none;
+        }
+
+        .btn-warning {
+            background-color: #fd7e14;
+            border: none;
+            color: white;
+        }
+
+        .btn-danger {
+            background-color: #dc3545;
+            border: none;
+        }
+
+        .btn-sm {
+            font-weight: 600;
+            padding: 6px 12px;
+            border-radius: 6px;
+        }
+
+        .text-success {
+            color: #198754 !important;
+        }
+
+        .text-danger {
+            color: #dc3545 !important;
+        }
+
+        .text-secondary {
+            color: #6c757d !important;
+        }
+
+        #productListScrollable {
+            max-height: 500px;
+            overflow-y: auto;
+            padding: 10px;
+            border: 1px solid #dee2e6;
+            border-radius: 10px;
+            background-color: #fff;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+        }
+
+        #productListScrollable::-webkit-scrollbar {
+            width: 8px;
+        }
+        #productListScrollable::-webkit-scrollbar-thumb {
+            background-color: #b2dfdb;
             border-radius: 8px;
-            margin-bottom: 1rem;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-            }
+        }
 
-            @media (min-width: 768px) {
-            .product-card-body {
-                flex-direction: row;
-                align-items: center;
-                justify-content: space-between;
-                flex-wrap: wrap;
-            }
-            }
+        #enregistrerTout {
+            margin-top: 30px;
+            padding: 12px 28px;
+            font-weight: 600;
+            border-radius: 8px;
+            background-color: #2e7d32;
+            color: white;
+            font-size: 16px;
+            transition: background-color 0.2s ease;
+        }
 
-            .product-info {
-            flex: 1;
-            min-width: 180px;
-            }
+        #enregistrerTout:hover {
+            background-color: #256429;
+        }
 
-            .product-name {
-            font-weight: bold;
-            font-size: 1.1rem;
-            }
+        .product-stats {
+            font-size: 16px;
+            font-weight: 600;
+            flex-wrap: wrap;
+            gap: 18px;
+        }
 
-            .product-meta {
-            font-size: 0.9rem;
-            color: #666;
-            }
+        .stat {
+            display: inline-block;
+            font-family: 'Poppins', sans-serif;
+            line-height: 1.4;
+        }
 
-            .product-stock {
-            color: #e74c3c;
-            font-size: 0.9rem;
-            }
+        .stat-commande strong {
+            color: #2e7d32; /* vert foncé */
+        }
 
-            .product-fields {
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-            }
+        .stat-livre strong {
+            color: #198754; /* vert clair */
+        }
 
-            @media (min-width: 768px) {
-            .product-fields {
-                flex-direction: row;
-                gap: 1rem;
-            }
-            }
+        .stat-reste strong {
+            color: #dc3545; /* rouge vif */
+        }
 
-            .product-fields .form-group {
-            display: flex;
-            flex-direction: column;
-            min-width: 120px;
-            }
-
-            .product-actions {
-            display: flex;
-            gap: 0.5rem;
-            justify-content: flex-end;
-            }
-
-        @media (max-width: 768px) {
-            form {
-                padding: 20px;
-                max-width: 100%;
-            }
-
-            .product-item {
-                flex-direction: column;
-                align-items: flex-start;
-            }
-
-            button,
-            a {
-                width: 100%;
-                margin: 10px 0;
-            }
+        .stat-stock strong {
+            color: #0d6efd; /* bleu Bootstrap */
         }
     </style>
 </head>
@@ -682,26 +659,26 @@ $nomBL = $_GET["nomBL"];
                         </div>
                     </div>
                 </div>
-    <!-- Conteneur principal stylisé -->
-    <div class="container p-4 mt-4 shadow-sm bg-white rounded border">
 
-        <form id="bonForm" method="post">
-            
-            <h1 class="mb-4">Livraison : <b><?php echo htmlspecialchars($nomBL); ?></b></h1>
-        
-            <!-- Liste des produits (remplie en JS) -->
-            <div id="productList" class="product-list mb-4">
-                <!-- Produits injectés dynamiquement ici -->
-            </div>
-            
-            <!-- Bouton d'action principal -->
-            <div class="d-flex justify-content-end">
-                <button type="button" class="btn btn-success" id="enregistrerTout">✅ Enregistrer Tout</button>
-            </div>
-            
-        </form>
+                <div class="container py-4">
+                    <form id="bonForm" method="post">
+                        <div class="page-header d-flex justify-content-between align-items-center px-4 py-3 mb-4 shadow-sm">
+                            <h1 class="mb-0">Bon de Livraison: <?php echo '<b>' . htmlspecialchars($nomBL) . '</b>'; ?></h1>
+                            <a href='Liste_BL.php' class="btn btn-secondary">&larr; Retour</a>
+                        </div>
 
-    </div>
+                        <div id="productList" class="product-list mt-4">
+                            <h2 class="mb-3">Produits</h2>
+                            <div id="productListScrollable">
+                                <!-- Les produits seront injectés ici dynamiquement par JS -->
+                            </div>
+                        </div>
+
+                        <button type="button" class="btn btn-success d-block mx-auto" id="enregistrerTout">
+                            ✅ Enregistrer Tout
+                        </button>
+                    </form>
+                </div>
     
     <div class="footer py-4 d-flex flex-lg-column" id="kt_footer">
                     <div class="container-fluid d-flex flex-column flex-md-row align-items-center justify-content-between">

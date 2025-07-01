@@ -21,30 +21,30 @@ document.addEventListener('DOMContentLoaded', function () {
                 productItem.innerHTML = `
                     <span id="reste${product.idP}" hidden>${product.reste}</span>
 
-                    <div class="product-card-body p-3">
-                        <div class="product-info mb-2">
-                            <div class="fw-bold fs-5 product-name">${product.nomproduit}</div>
-                            <div class="text-muted">
-                                Commandé : ${product.quantite_commandee} | 
-                                Déjà livré : ${product.quantite_deja_livree} | 
-                                Reste : ${product.reste}
+                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+                        <div class="product-info pe-3">
+                            <div class="product-name">${product.nomproduit}</div>
+                            <div class="d-flex flex-wrap gap-3 align-items-center product-stats mb-2">
+                                <span class="stat stat-commande">Commandé : <strong>${product.quantite_commandee}</strong></span>
+                                <span class="stat stat-livre">Livré : <strong>${product.quantite_deja_livree}</strong></span>
+                                <span class="stat stat-reste">Reste : <strong>${product.reste}</strong></span>
+                                <span class="stat stat-stock">Stock actuel : <strong>${product.Stock_actuel ?? 'N/A'}</strong></span>
                             </div>
-                            <div class="fst-italic">Stock actuel : ${product.Stock_actuel ?? 'N/A'}</div>
                         </div>
 
-                        <div class="product-fields row g-3 mb-2">
-                            <div class="col-md-6">
-                                <label>Quantité</label>
-                                <input type="number" 
-                                    class="form-control" 
-                                    id="quantity${product.idP}" 
-                                    value="${dejaLivre ? product.quantite_deja_livree : ''}" 
+                        <div class="product-controls d-flex align-items-center gap-2 flex-wrap">
+                            <div>
+                                <label class="form-label mb-1">Quantité</label>
+                                <input type="number"
+                                    class="form-control"
+                                    id="quantity${product.idP}"
+                                    value="${dejaLivre ? product.quantite_deja_livree : ''}"
                                     data-quantite-initiale="${dejaLivre ? product.quantite_deja_livree : ''}" />
                             </div>
-                            <div class="col-md-6">
-                                <label>Unité</label>
-                                <select id="unite${product.idP}" 
-                                        class="form-select" 
+                            <div>
+                                <label class="form-label mb-1">Unité</label>
+                                <select id="unite${product.idP}"
+                                        class="form-select"
                                         data-unite-initiale="${product.unite ?? ''}">
                                     <option value="">-- unité --</option>
                                     <option value="pièce" ${product.unite === 'pièce' ? 'selected' : ''}>pièce</option>
@@ -52,13 +52,13 @@ document.addEventListener('DOMContentLoaded', function () {
                                     <option value="carton" ${product.unite === 'carton' ? 'selected' : ''}>carton</option>
                                 </select>
                             </div>
-                        </div>
 
-                        <div class="product-actions">
-                            <button type="button" class="btn btn-sm ${dejaLivre ? 'btn-primary modify' : 'btn-success add'}">
-                                ${dejaLivre ? '✏️ Modifier' : '➕ Enregistrer'}
-                            </button>
-                            <button type="button" class="btn btn-sm btn-danger delete">Retirer</button>
+                            <div class="d-flex gap-2 align-items-end mt-2">
+                                <button type="button" class="btn btn-sm ${dejaLivre ? 'btn-warning modify' : 'btn-success add'}">
+                                    ${dejaLivre ? '✏️ Modifier' : '➕ Enregistrer'}
+                                </button>
+                                <button type="button" class="btn btn-sm btn-danger delete">Retirer</button>
+                            </div>
                         </div>
                     </div>
                 `;

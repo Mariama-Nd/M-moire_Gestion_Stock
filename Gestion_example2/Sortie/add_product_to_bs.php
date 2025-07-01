@@ -14,77 +14,235 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
     <title>Bon de Commande</title>
     <style>
-   
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #f8f9fa;
+            color: #212529;
+        }
 
-   form {
-       background-color: #fff;
-       border-radius: 12px;
-       box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
-       padding: 30px;
-       width: 100%;
-       max-width: 1100px;
-       box-sizing: border-box;
-       transition: all 0.3s ease;
-   }
+        .container {
+            padding: 60px 20px;
+            display: flex;
+            justify-content: center;
+        }
 
-   h1,
-   h2 {
-       color: #2e7d32;
-       font-family: 'Helvetica Neue', sans-serif;
-       margin-bottom: 20px;
-   }
+        form {
+            background-color: #fff;
+            border-radius: 12px;
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+            padding: 40px;
+            width: 100%;
+            max-width: 1300px;
+            box-sizing: border-box;
+            transition: all 0.3s ease;
+            font-size: 17px;
+        }
 
-   label,
-   select,
-   input[type="number"] {
-       display: block;
-       width: 100%;
-       margin-bottom: 15px;
-   }
+        /* ----- Titre de la page avec bouton retour ----- */
+        .page-header {
+            background-color: #e9f5ee;
+            border: 1px solid #cde4d4;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            padding: 24px 32px;
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
 
-   select,
-   input[type="number"] {
-       padding: 10px;
-       border: 1px solid #ddd;
-       border-radius: 6px;
-       font-size: 16px;
-       box-sizing: border-box;
-   }
+        .page-header h1 {
+            color: #2e7d32;
+            font-weight: 700;
+            font-size: 26px;
+            margin: 0;
+        }
 
-   .product-item {
-       display: flex;
-       align-items: center;
-       justify-content: space-between;
-       margin-bottom: 20px;
-       padding: 15px;
-       background-color: #f9fafb;
-       border: 1px solid #e0e0e0;
-       border-radius: 8px;
-       box-sizing: border-box;
-   }
+        /* Bouton retour */
+        .page-header a.btn-secondary {
+            background-color: #6c757d;
+            color: white;
+            padding: 10px 20px;
+            font-size: 15px;
+            border-radius: 6px;
+            text-decoration: none;
+            transition: background-color 0.2s ease;
+        }
 
-   .product-item label {
-       margin-right: 0px;
-       /* Réduire l'espace entre le label et l'input */
-       margin-left: 10px;
-   }
+        .page-header a.btn-secondary:hover {
+            background-color: #5a6268;
+        }
 
-   .product-item input[type="number"] {
-       margin-right: 15px;
-       /* Espace entre l'input et les boutons */
-   }
+        h2 {
+            color: #2e7d32;
+            font-weight: 600;
+            font-size: 22px;
+            margin-bottom: 25px;
+        }
 
-   .product-item button {
-       margin-left: 10px;
-       /* Espace entre les boutons */
-   }
+        label,
+        select,
+        input[type="number"] {
+            display: block;
+            width: 100%;
+            margin-bottom: 15px;
+        }
 
- 
- 
+        select,
+        input[type="number"] {
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
 
+        /* ----- Produit ----- */
+        .card {
+            border-radius: 12px;
+            border: 1px solid #dee2e6;
+            background-color: #ffffff;
+            transition: all 0.3s ease;
+        }
 
+        .card:hover {
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.05);
+        }
 
+        .card-body {
+            padding: 24px;
+            background-color: #f8f9fa;
+            border-radius: 12px;
+        }
 
+        .product-name {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1b1b1b;
+            margin-bottom: 6px;
+        }
+
+        .product-name small {
+            display: block;
+            font-size: 14px;
+            color: #6c757d;
+        }
+
+        .product-name strong {
+            font-size: 15px;
+            display: block;
+            margin-top: 5px;
+        }
+
+        /* ----- Form-group ----- */
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 0;
+        }
+
+        .form-group label {
+            font-weight: 600;
+            font-size: 15px;
+            margin-bottom: 6px;
+            color: #333;
+        }
+
+        .form-control,
+        .product-unite {
+            height: 44px;
+            font-size: 15px;
+        }
+
+        /* ----- Boutons ----- */
+        .btn {
+            padding: 10px 20px;
+            font-size: 16px;
+            font-weight: 600;
+            border-radius: 6px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .btn-success {
+            background-color: #198754;
+            color: white;
+            border: none;
+        }
+
+        .btn-success:hover {
+            background-color: #157347;
+        }
+
+        .btn-primary {
+            background-color: #0d6efd;
+            color: white;
+            border: none;
+        }
+
+        .btn-primary:hover {
+            background-color: #0b5ed7;
+        }
+
+        .btn-secondary {
+            background-color: #6c757d;
+            color: white;
+            border: none;
+        }
+
+        .btn-secondary:hover {
+            background-color: #5a6268;
+        }
+
+        /* ----- Bouton Enregistrer Tout ----- */
+        #enregistrerTout {
+            margin-top: 40px;
+            padding: 14px 30px;
+            font-weight: 600;
+            border-radius: 8px;
+            background-color: #2e7d32;
+            color: white;
+            font-size: 18px;
+            transition: background-color 0.2s ease;
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        #enregistrerTout:hover {
+            background-color: #256429;
+        }
+
+        /* ----- Responsive ----- */
+        @media (max-width: 768px) {
+            .card-body {
+                flex-direction: column;
+                gap: 16px;
+            }
+
+            .btn,
+            a {
+                width: 100%;
+                margin: 10px 0;
+            }
+
+            .page-header {
+                flex-direction: column;
+                gap: 16px;
+                padding: 20px;
+                text-align: center;
+            }
+
+            h1 {
+                font-size: 22px;
+            }
+
+            .container {
+                padding: 30px 10px;
+            }
+        }
 </style>
 </head>
 
@@ -521,17 +679,28 @@
                         </div>
                     </div>
                 </div>
+
                 <div class="container">
-            <form id="productForm" method="post">
-       
-        
-        <div id="productList" class="product-list">
-            <h2>Produits</h2>
-            <!-- Les produits seront chargés ici via AJAX -->
-        </div>
-        <button type="button" class="btn btn-success" name="enregistrerTout" id="enregistrerTout">Enregistrer Tout</button>
-    </form>
-</div>
+                    <form id="productForm" method="post">
+                        <!-- En-tête avec titre et bouton retour -->
+                        <div class="page-header">
+                            <h1>📦 <b>Sortie de stock - Approvisionner</b></h1>
+                            <a href="Liste_bon_sortie.php" class="btn btn-secondary">&larr; Retour</a>
+                        </div>
+
+                        <!-- Zone liste des produits -->
+                        <div id="productList" class="product-list">
+                            <h2>Produits</h2>
+                            <!-- Les produits seront chargés ici dynamiquement via JavaScript -->
+                        </div>
+
+                        <!-- Bouton global Enregistrer Tout -->
+                        <button type="button" class="btn btn-success" name="enregistrerTout" id="enregistrerTout">
+                            ✅ Enregistrer Tout
+                        </button>
+                    </form>
+                </div>
+
     <div class="footer py-4 d-flex flex-lg-column" id="kt_footer">
                     <div class="container-fluid d-flex flex-column flex-md-row align-items-center justify-content-between">
                         <div class="text-dark order-2 order-md-1">

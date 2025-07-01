@@ -16,36 +16,39 @@
     <link href="../../ressources/dist_assets/css/style.bundle.css" rel="stylesheet" type="text/css" />
     <link href="../../ressources/dist_assets/css/style.css" rel="stylesheet" type="text/css" />
     <link href="../../ressources/dist_assets/plugins/custom/datatables/datatables.bundle.css" rel="stylesheet" type="text/css" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/@sweetalert2/theme-bootstrap-4/bootstrap-4.min.css" rel="stylesheet">
     <link rel="stylesheet" href="../../css/style.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
-<style>
-    body{
-        flex-direction: column;
+  <style>
+    body {
+      background-color: #f8f9fa;
     }
-    #sales-table td, #sales-table th {
-    vertical-align: middle;
+
+    h3.text-success {
+      font-size: 1.75rem;
+      font-weight: bold;
+    }
+
+    #sales-table th, #sales-table td {
+      vertical-align: middle;
+      text-align: center;
     }
 
     .btn-custom {
-        padding: 5px 10px;
-        font-size: 0.875rem;
-        border-radius: 0.3rem;
+      padding: 5px 10px;
+      font-size: 0.875rem;
+      border-radius: 0.3rem;
     }
 
-    #searchInput, #filterStatus {
-        max-width: 300px;
+    .dataTables_filter label,
+    .dataTables_length label {
+      margin-bottom: 0.5rem;
     }
+  </style>
 
-    .card-title {
-        font-size: 1rem;
-    }
-
-    .page-link {
-        cursor: pointer;
-    }
-
-</style>
 <body id="kt_body" class="header-fixed header-tablet-and-mobile-fixed toolbar-enabled toolbar-fixed aside-enabled aside-fixed" style="--kt-toolbar-height:55px;--kt-toolbar-height-tablet-and-mobile:55px ">
     <div class="d-flex flex-column flex-root">
         <div class="page d-flex flex-row flex-column-fluid">
@@ -534,45 +537,29 @@
                         </div>
                     </div>
                 </div>
-                <div class="container my-5">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="text-primary">Liste des Bons de Sortie</h2>
-        <button onclick="creerBS()" class="btn btn-success">+ Créer un BS</button>
-    </div>
 
-    <div class="d-flex justify-content-between flex-wrap mb-3">
-        <input type="text" id="searchInput" class="form-control w-50 mb-2" placeholder="Rechercher par nom ou service...">
-        <select id="filterStatus" class="form-select w-25 mb-2">
-            <option value="">Tous les états</option>
-            <option value="En attente">En attente</option>
-            <option value="Validé">Validé</option>
-            <option value="En cours">En cours</option>
-        </select>
-    </div>
+                <div class="container bg-white shadow p-4 rounded mt-4">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h3 class="text-success">Liste des Sortie</h3>
+    <button class="btn btn-success btn-custom" onclick="creerBS()">➕ Nouvelle Sortie</button>
+  </div>
 
-    <div class="table-responsive shadow-sm rounded">
-        <table id="sales-table" class="table table-hover align-middle mb-0 bg-white">
-            <thead class="bg-light">
-                <tr>
-                    <th>Prenom</th>
-                    <th>Nom</th>
-                    <th>Service</th>
-                    <th>Date</th>
-                    <th>État</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody class="text-dark fw-normal">
-                <!-- Données injectées par JS -->
-            </tbody>
-        </table>
-    </div>
-
-    <nav class="mt-4">
-        <ul class="pagination justify-content-center" id="pagination">
-            <!-- Pagination injectée dynamiquement -->
-        </ul>
-    </nav>
+  <!-- Tableau -->
+  <div class="table-responsive">
+    <table id="sales-table" class="table table-striped table-bordered w-100">
+      <thead class="table-success text-uppercase text-center">
+        <tr>
+          <th>Prénom</th>
+          <th>Nom</th>
+          <th>Service</th>
+          <th>Date</th>
+          <th>État</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody class="text-dark text-center"></tbody>
+    </table>
+  </div>
 </div>
 
     <div class="footer py-4 d-flex flex-lg-column" id="kt_footer">
@@ -602,7 +589,25 @@
     <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
-<script src="../../js/listeBonSortie.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+    <script src="../../js/listeBonSortie.js"></script>
+    <!-- DataTables francisé -->
+<script>
+  $(document).ready(function () {
+    $('#sales-table').DataTable({
+      paging: true,
+      pageLength: 5,
+      lengthChange: true,
+      language: {
+        url: '//cdn.datatables.net/plug-ins/1.11.5/i18n/fr_fr.json'
+      }
+    });
+  });
+</script>
 </body>
 
 </html>

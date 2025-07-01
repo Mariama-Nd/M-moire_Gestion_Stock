@@ -13,21 +13,23 @@ document.addEventListener('DOMContentLoaded', function () {
                     productItem.className = 'product-item card mb-3 shadow-sm';  
                     productItem.dataset.idp = product.idP;
                     productItem.innerHTML = `
-                        <div class="card-body d-flex align-items-center justify-content-between flex-wrap gap-3 p-3">
-                            <div class="flex-grow-1">
-                                <div class="fw-bold">${product.nomproduit}</div>
-                                <div class="text-muted">Reste: ${product.reste}</div>
-                                <div style="color:red;">Stock actuel : ${product.Stock_actuel}</div>
+                        <div class="card-body d-flex align-items-center justify-content-between flex-wrap gap-4 p-3 border rounded bg-light">
+                            <div class="product-info flex-grow-1">
+                                <div class="product-name h5 fw-semibold mb-1">${product.nomproduit}</div>
+                                <div class="d-flex gap-4 flex-wrap fs-6">
+                                    <span class="text-danger">Reste : <strong>${product.reste}</strong></span>
+                                    <span class="text-purple">Stock actuel : <strong>${product.Stock_actuel}</strong></span>
+                                </div>
                             </div>
 
-                            <div class="form-group">
-                                <label class="form-label mb-1"><b>Quantité</b></label>
-                                <input type="number" name="quantity[]" min="0" id="quantity${product.idP}" class="form-control" value="${product.quantite}" style="min-width: 100px;">
+                            <div class="form-group d-flex flex-column">
+                                <label class="form-label mb-1 fw-semibold">Quantité</label>
+                                <input type="number" name="quantity[]" min="0" id="quantity${product.idP}" class="form-control" value="${product.quantite}" style="min-width: 120px;">
                             </div>
 
-                            <div class="form-group">
-                                <label class="form-label mb-1"><b>Unité</b></label>
-                                <select name="unite[]" id="unite${product.idP}" class="form-select" style="min-width: 100px;">
+                            <div class="form-group d-flex flex-column">
+                                <label class="form-label mb-1 fw-semibold">Unité</label>
+                                <select name="unite[]" id="unite${product.idP}" class="form-select" style="min-width: 120px;">
                                     <option value="pièce" ${product.unite === 'pièce' ? 'selected' : ''}>pièce</option>
                                     <option value="boîte" ${product.unite === 'boîte' ? 'selected' : ''}>boîte</option>
                                     <option value="carton" ${product.unite === 'carton' ? 'selected' : ''}>carton</option>
@@ -35,15 +37,15 @@ document.addEventListener('DOMContentLoaded', function () {
                             </div>
 
                             <div class="d-flex gap-2 align-items-end">
-                                <button type="button" class="btn ${product.reste > 0 ? 'btn-success' : 'btn-primary'} action-btn px-3" 
-                                        data-idp="${product.idP}" data-reste="${product.reste}">
+                                <button type="button" class="btn ${product.reste > 0 ? 'btn-success' : 'btn-primary'} px-3 action-btn"
+                                    data-idp="${product.idP}" data-reste="${product.reste}">
                                     <i class="bi ${product.reste > 0 ? 'bi-plus-circle' : 'bi-pencil-square'} me-1"></i>
                                     ${product.reste > 0 ? 'Enregistrer' : 'Modifier'}
                                 </button>
-                                <button type="button" class="btn btn-danger px-3 delete">Supprimer</button>
+                                <button type="button" class="btn btn-danger px-3 delete">x Retirer</button>
                             </div>
                         </div>
-                    `;
+                        `;
                     productList.appendChild(productItem);
                 });
                 
@@ -68,19 +70,40 @@ document.addEventListener('DOMContentLoaded', function () {
                     productItem.className = 'product-item';
                     productItem.dataset.idp = product.idP;
                     productItem.innerHTML = `
-                        <input type="checkbox" id="prod${product.idP}" name="products[]" value="${product.idP}">
+                        <div class="card-body d-flex align-items-center justify-content-between flex-wrap gap-4 p-3">
+                            <div class="product-info">
+                                <div class="product-name">
+                                    <input type="checkbox" id="prod${product.idP}" name="products[]" value="${product.idP}" class="form-check-input me-2">
+                                    <label for="prod${product.idP}" class="form-check-label">${product.nomproduit}</label>
+                                </div>
+                                <div class="product-stats d-flex gap-4 flex-wrap mt-2">
+                                    <span class="stat stat-commande">Commandé : <strong>${product.quantite_commandee}</strong></span>
+                                    <span class="stat stat-livre">Déjà livré : <strong>${product.quantite_deja_livree ?? 0}</strong></span>
+                                    <span class="stat stat-reste">Reste : <strong>${product.reste}</strong></span>
+                                    <span class="stat stat-stock">Stock actuel : <strong>${product.Stock_actuel ?? 'N/A'}</strong></span>
+                                </div>
+                            </div>
 
-                        <label for="prod${product.idP}" class="product-name"><b>${product.nomproduit} <br> (Reste:${product.reste})</b></label><br>
-                        <input type="number" name="quantity[]" min="0" disabled id="${product.idP}" placeholder="Quantité reçue">
+                            <div class="form-group">
+                                <label class="form-label mb-1">Quantité</label>
+                                <input type="number" name="quantity[]" min="0" disabled id="${product.idP}" class="form-control" placeholder="Quantité reçue">
+                            </div>
 
-                        <label for="unite${product.idP}"><b>Unité (pièce, boîte, carton)</b></label>
-                        <select name="unite[]" class="product-unite form-select" id="unite${product.idP}" disabled>
-                            <option value="pièce" ${product.unite === 'pièce' ? 'selected' : ''}>pièce</option>
-                            <option value="boîte" ${product.unite === 'boîte' ? 'selected' : ''}>boîte</option>
-                            <option value="carton" ${product.unite === 'carton' ? 'selected' : ''}>carton</option>
-                        </select>
+                            <div class="form-group">
+                                <label class="form-label mb-1">Unité</label>
+                                <select name="unite[]" class="product-unite form-select" id="unite${product.idP}" disabled>
+                                    <option value="pièce" ${product.unite === 'pièce' ? 'selected' : ''}>pièce</option>
+                                    <option value="boîte" ${product.unite === 'boîte' ? 'selected' : ''}>boîte</option>
+                                    <option value="carton" ${product.unite === 'carton' ? 'selected' : ''}>carton</option>
+                                </select>
+                            </div>
 
-                        <button type="button" class="partielle-save" data-idp="${product.idP}">Enregistrer</button>
+                            <div class="d-flex gap-2 align-items-end">
+                                <button type="button" class="btn btn-success partielle-save" data-idp="${product.idP}">
+                                    ✅ Enregistrer
+                                </button>
+                            </div>
+                        </div>
                     `;
                     productList.appendChild(productItem);
                 });
