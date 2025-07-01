@@ -19,6 +19,7 @@
     <link href="../../ressources/dist_assets/css/style.css" rel="stylesheet" type="text/css" />
     <link href="../../ressources/dist_assets/plugins/custom/datatables/datatables.bundle.css" rel="stylesheet" type="text/css" />
     <link href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
     <link rel="stylesheet" href="../../css/style.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
@@ -95,6 +96,40 @@
             height: 60px;
             width: 60px;
             opacity: 0.9;
+        }
+
+        .modal-content {
+        border-radius: 1rem !important;
+        }
+
+        .table td, .table th {
+        vertical-align: middle;
+        text-align: center;
+        }
+
+        #modalDetailsPaiement .badge {
+        padding: 0.5em 1em;
+        font-weight: 500;
+        border-radius: 0.5rem;
+        }
+
+        #modalDetailsPaiement img.img-thumbnail {
+        border-radius: 0.75rem;
+        max-height: 160px;
+        transition: transform 0.3s ease;
+        }
+
+        #modalDetailsPaiement img.img-thumbnail:hover {
+        transform: scale(1.05);
+        }
+
+        #modalDetailsPaiement img.img-fluid {
+        transition: transform 0.3s ease;
+        border: 1px solid #dee2e6;
+        }
+
+        #modalDetailsPaiement img.img-fluid:hover {
+        transform: scale(1.1);
         }
 
 </style>
@@ -629,37 +664,72 @@
 
                 <!-- Modal Détails Paiement -->
                 <div class="modal fade" id="modalDetailsPaiement" tabindex="-1" aria-labelledby="modalDetailsLabel" aria-hidden="true">
-                    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
-                        <div class="modal-content">
-                            <div class="modal-header bg-info text-white">
-                                <h5 class="modal-title" style="color: white;" id="modalDetailsLabel">Détails du paiement</h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                            </div>
-                            <div class="modal-body">
-                                <p><strong>Numéro commande :</strong> <span id="detailNumero"></span></p>
-                                <p><strong>Montant total :</strong> <span id="detailMontantTotal"></span></p>
-                                <p><strong>Mode de règlement :</strong> <span id="detailMode"></span></p>
-                                <p><strong>Modalité de paiement :</strong> <span id="detailModalite"></span></p>
+                <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+                    <div class="modal-content border-0 shadow-lg rounded-4">
+                    <div class="modal-header" style="background-color: #6f42c1;">
+                        <h4 class="modal-title text-white fw-bold" style="font-size: 1.5rem;" id="modalDetailsLabel">
+                            <i class="bi bi-receipt-cutoff me-2"></i>Détails du paiement
+                        </h4>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body bg-light px-4 pt-4 pb-3">
 
-                                <div id="sectionTranches" class="mt-4 d-none">
-                                    <h6>Historique des tranches :</h6>
-                                    <table class="table table-bordered">
-                                        <thead>
-                                        <tr>
-                                            <th>Numéro</th>
-                                            <th>Montant</th>
-                                            <th>Date</th>
-                                        </tr>
-                                        </thead>
-                                        <tbody id="tbodyTranches"></tbody>
-                                    </table>
-                                </div>
-                            </div>
-                            <div class="modal-footer">
-                                <button class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+                        <!-- Informations principales -->
+                        <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <div class="p-3 bg-white rounded shadow-sm border">
+                            <h6 class="mb-1 text-muted">Numéro commande</h6>
+                            <p class="fs-5 fw-semibold text-dark mb-0" id="detailNumero">—</p>
                             </div>
                         </div>
+                        <div class="col-md-6">
+                            <div class="p-3 bg-white rounded shadow-sm border">
+                            <h6 class="mb-1 text-muted">Montant total</h6>
+                            <p class="fs-5 fw-semibold text-success mb-0" id="detailMontantTotal">—</p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="p-3 bg-white rounded shadow-sm border">
+                            <h6 class="mb-1 text-muted">Mode de règlement</h6>
+                            <span class="badge bg-primary fs-6" id="detailMode">—</span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="p-3 bg-white rounded shadow-sm border">
+                            <h6 class="mb-1 text-muted">Modalité de paiement</h6>
+                            <span class="badge bg-secondary fs-6" id="detailModalite">—</span>
+                            </div>
+                        </div>
+                        </div>
+
+                        <!-- Historique des tranches -->
+                        <div id="sectionTranches" class="d-none">
+                        <h6 class="mb-3 text-primary border-bottom pb-2">
+                            <i class="bi bi-clock-history me-1"></i>Historique des tranches
+                        </h6>
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle table-bordered bg-white rounded shadow-sm">
+                                <thead class="table-light text-center">
+                                    <tr>
+                                        <th>Ordre</th>
+                                        <th>Montant</th>
+                                        <th>Date</th>
+                                        <th>Reçu (Image clicable)</th>
+                                    </tr>
+                                </thead>
+                            <tbody id="tbodyTranches"></tbody>
+                            </table>
+                        </div>
+                        </div>
+
                     </div>
+                    <div class="modal-footer bg-white rounded-bottom-4">
+                        <button type="button" class="btn btn-secondary w-100" data-bs-dismiss="modal">
+                        <i class="bi bi-x-circle me-1"></i> Fermer
+                        </button>
+                    </div>
+                    </div>
+                </div>
                 </div>
 
                 <input type="hidden" id="etat_actuel" value="partielle">

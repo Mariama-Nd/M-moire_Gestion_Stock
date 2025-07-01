@@ -72,23 +72,19 @@ $(document).on("click", ".btn-details", function () {
     if (data.tranches.length > 0) {
       let lignes = "";
       data.tranches.forEach((t, i) => {
-        lignes += `<tr class="align-middle">
+        lignes += `<tr class="align-middle text-center">
           <td>${i + 1}</td>
-          <td>${t.montant} F</td>
+          <td class="text-success fw-semibold">${t.montant} F</td>
           <td>${t.date_paiement}</td>
+          <td>
+            ${t.recu && t.recu !== ""
+              ? `<a href="../../${t.recu}" target="_blank">
+                  <img src="../../${t.recu}" alt="Reçu" class="img-fluid rounded" style="height: 45px; max-width: 60px; object-fit: cover;">
+                </a>`
+              : `<span class="text-muted fst-italic">—</span>`}
+          </td>
         </tr>`;
-
-        if (t.recu && t.recu !== "") {
-          lignes += `<tr>
-            <td colspan="3" class="text-center">
-              <a href="../../${t.recu}" target="_blank">
-                <img src="../../${t.recu}" alt="Reçu" class="img-thumbnail mt-2" style="max-width: 200px; cursor: pointer;">
-              </a>
-            </td>
-          </tr>`;
-        }
       });
-
       $("#tbodyTranches").html(lignes);
       $("#sectionTranches").removeClass("d-none");
     } else {
