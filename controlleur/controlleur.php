@@ -3685,59 +3685,86 @@ case 44:
                                                                         //voir details
                                                                         case 104:
                                                                             try {
-                                                                              $id = $_POST['id'] ?? null;
-                                                                              if (!$id) throw new Exception("ID manquant");
-                                                                          
-                                                                              $db = $gc->getDb();
-                                                                          
-                                                                              // Récupération des infos principales
-                                                                              $stmt = $db->prepare("SELECT numero, montant_total, mode_reglement, modalite_paiement FROM CommandeAchat WHERE id = ?");
-                                                                              $stmt->execute([$id]);
-                                                                              $commande = $stmt->fetch(PDO::FETCH_ASSOC);
-                                                                          
-                                                                              if (!$commande) throw new Exception("Commande introuvable");
-                                                                          
-                                                                              // Historique des paiements
-                                                                              $stmt2 = $db->prepare("SELECT montant, date_paiement FROM PaiementCommande WHERE id_CommandeAchat = ? ORDER BY date_paiement ASC");
-                                                                              $stmt2->execute([$id]);
-                                                                              $tranches = $stmt2->fetchAll(PDO::FETCH_ASSOC);
-                                                                          
-                                                                              echo json_encode([
-                                                                                "success" => true,
-                                                                                "numero" => $commande['numero'],
-                                                                                "montant_total" => number_format($commande['montant_total'], 0, ',', ' '),
-                                                                                "mode_reglement" => $commande['mode_reglement'],
-                                                                                "modalite_paiement" => $commande['modalite_paiement'],
-                                                                                "tranches" => $tranches
-                                                                              ]);
+                                                                                $id = $_POST['id'] ?? null;
+                                                                                if (!$id) throw new Exception("ID manquant");
+                                                                        
+                                                                                $db = $gc->getDb();
+                                                                        
+                                                                                // Récupération des infos principales
+                                                                                $stmt = $db->prepare("SELECT numero, montant_total, mode_reglement, modalite_paiement FROM CommandeAchat WHERE id = ?");
+                                                                                $stmt->execute([$id]);
+                                                                                $commande = $stmt->fetch(PDO::FETCH_ASSOC);
+                                                                        
+                                                                                if (!$commande) throw new Exception("Commande introuvable");
+                                                                        
+                                                                                // Historique des paiements avec reçu
+                                                                                $stmt2 = $db->prepare("SELECT montant, date_paiement, recu FROM PaiementCommande WHERE id_CommandeAchat = ? ORDER BY date_paiement ASC");
+                                                                                $stmt2->execute([$id]);
+                                                                                $tranches = [];
+                                                                        
+                                                                                while ($row = $stmt2->fetch(PDO::FETCH_ASSOC)) {
+                                                                                    $row['montant'] = number_format((float) $row['montant'], 0, ',', ' '); // format F CFA
+                                                                                    $row['recu'] = $row['recu'] ?? '';
+                                                                                    $tranches[] = $row;
+                                                                                }
+                                                                        
+                                                                                echo json_encode([
+                                                                                    "success" => true,
+                                                                                    "numero" => $commande['numero'],
+                                                                                    "montant_total" => number_format($commande['montant_total'], 0, ',', ' '),
+                                                                                    "mode_reglement" => $commande['mode_reglement'],
+                                                                                    "modalite_paiement" => $commande['modalite_paiement'],
+                                                                                    "tranches" => $tranches
+                                                                                ]);
                                                                             } catch (Exception $e) {
-                                                                              echo json_encode(["success" => false, "message" => $e->getMessage()]);
+                                                                                echo json_encode(["success" => false, "message" => $e->getMessage()]);
                                                                             }
-                                                                            break;
+                                                                            break;                                                                        
                                                                             
                                                                             case 105:
                                                                                 try {
                                                                                     $id = $_POST["id_commande"] ?? null;
                                                                                     $montant = isset($_POST["montant"]) ? (float) $_POST["montant"] : 0;
                                                                                     $banque = trim($_POST["banque"] ?? '');
-                                                                                    $recu = trim($_POST["recu"] ?? '');
                                                                             
                                                                                     if (!$id || $montant <= 0) {
                                                                                         throw new Exception("Informations de paiement incomplètes.");
+                                                                                    }
+                                                                            
+                                                                                    // ✅ Gérer le reçu pour tous les modes
+                                                                                    $cheminRecu = null;
+                                                                                    if (isset($_FILES['recu']) && $_FILES['recu']['error'] === UPLOAD_ERR_OK) {
+                                                                                        $uploadsDir = __DIR__ . "/../uploads/recus/";
+                                                                            
+                                                                                        if (!is_dir($uploadsDir)) {
+                                                                                            throw new Exception("Le dossier 'uploads/recus' est introuvable.");
+                                                                                        }
+                                                                                        if (!is_writable($uploadsDir)) {
+                                                                                            throw new Exception("Le dossier 'uploads/recus' n'est pas accessible en écriture.");
+                                                                                        }
+                                                                            
+                                                                                        $filename = time() . "_" . basename($_FILES['recu']['name']);
+                                                                                        $targetPath = $uploadsDir . $filename;
+                                                                            
+                                                                                        if (move_uploaded_file($_FILES['recu']['tmp_name'], $targetPath)) {
+                                                                                            $cheminRecu = "uploads/recus/" . $filename;
+                                                                                        } else {
+                                                                                            throw new Exception("Erreur lors de l'upload du reçu.");
+                                                                                        }
                                                                                     }
                                                                             
                                                                                     $db = $gc->getDb();
                                                                             
                                                                                     // Insertion du paiement
                                                                                     $stmt = $db->prepare("INSERT INTO PaiementCommande (id_CommandeAchat, montant, banque, recu, date_paiement) VALUES (?, ?, ?, ?, NOW())");
-                                                                                    $stmt->execute([$id, $montant, $banque, $recu]);
+                                                                                    $stmt->execute([$id, $montant, $banque, $cheminRecu]);
                                                                             
-                                                                                    // Récupération du total à payer
+                                                                                    // Total commande
                                                                                     $stmt = $db->prepare("SELECT montant_total FROM CommandeAchat WHERE id = ?");
                                                                                     $stmt->execute([$id]);
                                                                                     $total = (float)$stmt->fetchColumn();
                                                                             
-                                                                                    // Total payé
+                                                                                    // Somme déjà payée
                                                                                     $stmt = $db->prepare("SELECT SUM(montant) FROM PaiementCommande WHERE id_CommandeAchat = ?");
                                                                                     $stmt->execute([$id]);
                                                                                     $paye = (float)$stmt->fetchColumn();
@@ -3753,12 +3780,17 @@ case 44:
                                                                             
                                                                                     echo json_encode(["success" => true]);
                                                                                 } catch (Exception $e) {
-                                                                                    echo json_encode([
-                                                                                        'success' => false,
-                                                                                        'message' => $e->getMessage()
-                                                                                    ]);
+                                                                                    file_put_contents("log_erreur_paiement.txt", json_encode([
+                                                                                        "message" => $e->getMessage(),
+                                                                                        "POST" => $_POST,
+                                                                                        "FILES" => $_FILES
+                                                                                    ], JSON_PRETTY_PRINT));
+                                                                            
+                                                                                    http_response_code(500);
+                                                                                    echo "Erreur serveur : " . $e->getMessage();
+                                                                                    exit;
                                                                                 }
-                                                                                break;                                                                                                                                                                                                                                                                                                                
+                                                                                break;                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                
                                                               
                                 }
                                 ?>

@@ -675,50 +675,53 @@
                     <div class="modal-body">
                         <form id="formPaiement" enctype="multipart/form-data">
                         <input type="hidden" name="id_commande" id="payer_id_commande">
+
                         <div class="mb-3">
                             <label class="form-label">Mode de règlement</label>
                             <input type="text" class="form-control" id="payer_mode" readonly>
                         </div>
+
                         <div class="mb-3">
                             <label class="form-label">Modalité de paiement</label>
                             <input type="text" class="form-control" id="payer_modalite" readonly>
                         </div>
+
                         <div class="mb-3">
                             <label class="form-label">Montant total</label>
                             <input type="text" class="form-control" id="payer_montant" readonly>
                         </div>
 
-                        <!-- Comptant par chèque/virement → banque + numéro -->
+                        <!-- Groupe banque (chèque / virement / liquide) -->
                         <div id="groupe_banque" class="d-none">
                             <div class="mb-3">
-                                <label class="form-label">Banque</label>
-                                <select class="form-select" id="banque" name="banque">
-                                    <option value="">-- Sélectionner --</option>
-                                    <option value="BANQUE INTERNATIONALE POUR LE COMMERCE ET L’INDUSTRIE DU SENEGAL">BANQUE INTERNATIONALE POUR LE COMMERCE ET L’INDUSTRIE DU SENEGAL</option>
-                                    <option value="BANK OF AFRICA">BANK OF AFRICA</option>
-                                    <option value="BANQUE ATLANTIQUE">BANQUE ATLANTIQUE</option>
-                                    <option value="BANQUE DE L’HABITAT DU SENEGAL">BANQUE DE L’HABITAT DU SENEGAL</option>
-                                    <option value="BANQUE DES INSTITUTIONS MUTUALISTES D’AFRIQUE DE L’OUEST">BANQUE DES INSTITUTIONS MUTUALISTES D’AFRIQUE DE L’OUEST</option>
-                                    <option value="BANQUE ISLAMIQUE DU SENEGAL">BANQUE ISLAMIQUE DU SENEGAL</option>
-                                    <option value="BANQUE REGIONALE DE MARCHES">BANQUE REGIONALE DE MARCHES</option>
-                                    <option value="BANQUE SAHELO-SAHARIENNE POUR L’INVESTISSEMENT ET LE COMMERCE">BANQUE SAHELO-SAHARIENNE POUR L’INVESTISSEMENT ET LE COMMERCE</option>
-                                    <option value="LA BANQUE AGRICOLE">LA BANQUE AGRICOLE</option>
-                                    <option value="GROUPE ATTIJARIWAFA BANK">GROUPE ATTIJARIWAFA BANK</option>
-                                    <option value="CITIBANK SENEGAL">CITIBANK SENEGAL</option>
-                                    <option value="CREDIT DU SENEGAL">CREDIT DU SENEGAL</option>
-                                    <option value="CREDIT INTERNATIONAL">CREDIT INTERNATIONAL</option>
-                                    <option value="BGFIBANK SENEGAL">BGFIBANK SENEGAL</option>
-                                    <option value="ECOBANK">ECOBANK</option>
-                                    <option value="FBNBANK SENEGAL">FBNBANK SENEGAL</option>
-                                    <option value="SOCIETE GENERALE SENEGAL">SOCIETE GENERALE SENEGAL</option>
-                                    <option value="UNITED BANK FOR AFRICA">UNITED BANK FOR AFRICA</option>
-                                    <option value="BANQUE NATIONALE POUR LE DEVELOPPEMENT ECONOMIQUE">BANQUE NATIONALE POUR LE DEVELOPPEMENT ECONOMIQUE</option>
-                                    <option value="BANQUE DE DAKAR">BANQUE DE DAKAR</option>
-                                    <option value="LA BANQUE OUTARDE">LA BANQUE OUTARDE</option>
-                                    <option value="CORIS BANK INTERNATIONAL">CORIS BANK INTERNATIONAL</option>
-                                    <option value="ORABANK">ORABANK</option>
-                                    <option value="BIZAO">BIZAO</option>
-                                    </select>
+                            <label class="form-label">Banque</label>
+                            <select class="form-select" id="banque" name="banque">
+                                <option value="">-- Sélectionner --</option>
+                                <option value="BANQUE INTERNATIONALE POUR LE COMMERCE ET L’INDUSTRIE DU SENEGAL">BANQUE INTERNATIONALE POUR LE COMMERCE ET L’INDUSTRIE DU SENEGAL</option>
+                                <option value="BANK OF AFRICA">BANK OF AFRICA</option>
+                                <option value="BANQUE ATLANTIQUE">BANQUE ATLANTIQUE</option>
+                                <option value="BANQUE DE L’HABITAT DU SENEGAL">BANQUE DE L’HABITAT DU SENEGAL</option>
+                                <option value="BANQUE DES INSTITUTIONS MUTUALISTES D’AFRIQUE DE L’OUEST">BANQUE DES INSTITUTIONS MUTUALISTES D’AFRIQUE DE L’OUEST</option>
+                                <option value="BANQUE ISLAMIQUE DU SENEGAL">BANQUE ISLAMIQUE DU SENEGAL</option>
+                                <option value="BANQUE REGIONALE DE MARCHES">BANQUE REGIONALE DE MARCHES</option>
+                                <option value="BANQUE SAHELO-SAHARIENNE POUR L’INVESTISSEMENT ET LE COMMERCE">BANQUE SAHELO-SAHARIENNE POUR L’INVESTISSEMENT ET LE COMMERCE</option>
+                                <option value="LA BANQUE AGRICOLE">LA BANQUE AGRICOLE</option>
+                                <option value="GROUPE ATTIJARIWAFA BANK">GROUPE ATTIJARIWAFA BANK</option>
+                                <option value="CITIBANK SENEGAL">CITIBANK SENEGAL</option>
+                                <option value="CREDIT DU SENEGAL">CREDIT DU SENEGAL</option>
+                                <option value="CREDIT INTERNATIONAL">CREDIT INTERNATIONAL</option>
+                                <option value="BGFIBANK SENEGAL">BGFIBANK SENEGAL</option>
+                                <option value="ECOBANK">ECOBANK</option>
+                                <option value="FBNBANK SENEGAL">FBNBANK SENEGAL</option>
+                                <option value="SOCIETE GENERALE SENEGAL">SOCIETE GENERALE SENEGAL</option>
+                                <option value="UNITED BANK FOR AFRICA">UNITED BANK FOR AFRICA</option>
+                                <option value="BANQUE NATIONALE POUR LE DEVELOPPEMENT ECONOMIQUE">BANQUE NATIONALE POUR LE DEVELOPPEMENT ECONOMIQUE</option>
+                                <option value="BANQUE DE DAKAR">BANQUE DE DAKAR</option>
+                                <option value="LA BANQUE OUTARDE">LA BANQUE OUTARDE</option>
+                                <option value="CORIS BANK INTERNATIONAL">CORIS BANK INTERNATIONAL</option>
+                                <option value="ORABANK">ORABANK</option>
+                                <option value="BIZAO">BIZAO</option>
+                            </select>
                             </div>
                             <div class="mb-3">
                             <label class="form-label">N° Chèque / Virement</label>
@@ -726,7 +729,7 @@
                             </div>
                         </div>
 
-                        <!-- Mobile money (wave/om) → reçu -->
+                        <!-- Reçu (affiché pour tous les modes désormais) -->
                         <div id="groupe_recu" class="mb-3 d-none">
                             <label class="form-label">Reçu de paiement (image)</label>
                             <input type="file" class="form-control" id="input_recu" name="recu" accept="image/*">

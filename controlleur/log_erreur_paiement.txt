@@ -1,0 +1,21 @@
+{
+    "message": "Le dossier 'uploads\/recus' est introuvable. Veuillez le cr\u00e9er manuellement.",
+    "POST": {
+        "id_commande": "46",
+        "banque": "",
+        "numero_cheque": "",
+        "montant_tranche": "5000",
+        "option": "105",
+        "montant": "5000"
+    },
+    "FILES": {
+        "recu": {
+            "name": "Capture d\u2019e\u0301cran 2024-12-30 a\u0300 20.24.58.png",
+            "full_path": "Capture d\u2019e\u0301cran 2024-12-30 a\u0300 20.24.58.png",
+            "type": "image\/png",
+            "tmp_name": "\/Applications\/XAMPP\/xamppfiles\/temp\/phpcUHqE7",
+            "error": 0,
+            "size": 100094
+        }
+    }
+}
