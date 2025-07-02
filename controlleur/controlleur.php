@@ -3731,11 +3731,27 @@ case 44:
                                                                                         throw new Exception("Informations de paiement incomplètes.");
                                                                                     }
                                                                             
+                                                                                    // Vérification du solde de la caisse du jour
+                                                                                    $db = $gc->getDb();
+                                                                                    $dateJour = date("Y-m-d");
+                                                                            
+                                                                                    $stmt = $db->prepare("SELECT id, montant_total, montant_utilise FROM CaisseJournee WHERE date_jour = ?");
+                                                                                    $stmt->execute([$dateJour]);
+                                                                                    $caisse = $stmt->fetch(PDO::FETCH_ASSOC);
+                                                                            
+                                                                                    if (!$caisse) {
+                                                                                        throw new Exception("Aucun montant attribué pour aujourd'hui dans la caisse.");
+                                                                                    }
+                                                                            
+                                                                                    $solde = $caisse['montant_total'] - $caisse['montant_utilise'];
+                                                                                    if ($montant > $solde) {
+                                                                                        throw new Exception("Fonds insuffisants dans la caisse pour ce paiement. Solde disponible : $solde F.");
+                                                                                    }
+                                                                            
                                                                                     // ✅ Gérer le reçu pour tous les modes
                                                                                     $cheminRecu = null;
                                                                                     if (isset($_FILES['recu']) && $_FILES['recu']['error'] === UPLOAD_ERR_OK) {
                                                                                         $uploadsDir = __DIR__ . "/../uploads/recus/";
-                                                                            
                                                                                         if (!is_dir($uploadsDir)) {
                                                                                             throw new Exception("Le dossier 'uploads/recus' est introuvable.");
                                                                                         }
@@ -3753,11 +3769,19 @@ case 44:
                                                                                         }
                                                                                     }
                                                                             
-                                                                                    $db = $gc->getDb();
-                                                                            
+                                                                                    $mode = trim($_POST["mode_reglement"] ?? '');
+
+                                                                                    if (empty($mode)) {
+                                                                                        throw new Exception("Le mode de règlement est requis.");
+                                                                                    }
+
                                                                                     // Insertion du paiement
-                                                                                    $stmt = $db->prepare("INSERT INTO PaiementCommande (id_CommandeAchat, montant, banque, recu, date_paiement) VALUES (?, ?, ?, ?, NOW())");
-                                                                                    $stmt->execute([$id, $montant, $banque, $cheminRecu]);
+                                                                                    $stmt = $db->prepare("INSERT INTO PaiementCommande (id_CommandeAchat, montant, banque, recu, mode_reglement, date_paiement) VALUES (?, ?, ?, ?, ?, NOW())");
+                                                                                    $stmt->execute([$id, $montant, $banque, $cheminRecu, $mode]);
+                                                                            
+                                                                                    // Mettre à jour le montant utilisé de la caisse
+                                                                                    $stmt = $db->prepare("UPDATE CaisseJournee SET montant_utilise = montant_utilise + ? WHERE id = ?");
+                                                                                    $stmt->execute([$montant, $caisse['id']]);
                                                                             
                                                                                     // Total commande
                                                                                     $stmt = $db->prepare("SELECT montant_total FROM CommandeAchat WHERE id = ?");
@@ -3790,7 +3814,149 @@ case 44:
                                                                                     echo "Erreur serveur : " . $e->getMessage();
                                                                                     exit;
                                                                                 }
-                                                                                break;                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                
-                                                              
+                                                                                break;
+                                                                                
+                                                                                case 106:
+                                                                                    try {
+                                                                                        $date = $_POST['date'] ?? null;
+                                                                                        $mode = $_POST['mode'] ?? null;
+                                                                                
+                                                                                        if (!$date || !$mode) throw new Exception("Date ou mode de paiement manquant.");
+                                                                                
+                                                                                        $paiements = [];
+                                                                                        $caisse = [
+                                                                                            'montant_alloue' => 0,
+                                                                                            'montant_utilise' => 0,
+                                                                                            'solde_restant' => 0,
+                                                                                            'nombre_paiements' => 0
+                                                                                        ];
+                                                                                
+                                                                                        $db = $gc->getDb();
+                                                                                
+                                                                                        if ($mode === 'global') {
+                                                                                            // On prend tous les paiements, tous modes confondus
+                                                                                            $stmt = $db->prepare("SELECT p.id, c.numero AS numero_commande, p.montant, p.banque, p.date_paiement, p.recu
+                                                                                                                  FROM PaiementCommande p
+                                                                                                                  JOIN CommandeAchat c ON p.id_CommandeAchat = c.id
+                                                                                                                  WHERE DATE(p.date_paiement) = ?
+                                                                                                                  ORDER BY p.date_paiement ASC");
+                                                                                            $stmt->execute([$date]);
+                                                                                            $paiements = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                                                                                
+                                                                                            $stmt = $db->prepare("SELECT IFNULL(SUM(montant), 0) AS total_utilise, COUNT(*) as nb_paiements
+                                                                                                                  FROM PaiementCommande
+                                                                                                                  WHERE DATE(date_paiement) = ?");
+                                                                                            $stmt->execute([$date]);
+                                                                                            $data = $stmt->fetch(PDO::FETCH_ASSOC);
+                                                                                
+                                                                                            // Somme des montants alloués dans CaisseJournee
+                                                                                            $stmt = $db->prepare("SELECT IFNULL(SUM(montant_total), 0) as total_alloue
+                                                                                                                  FROM CaisseJournee
+                                                                                                                  WHERE date_jour = ?");
+                                                                                            $stmt->execute([$date]);
+                                                                                            $row = $stmt->fetch(PDO::FETCH_ASSOC);
+                                                                                
+                                                                                            $caisse['montant_alloue'] = (float)$row['total_alloue'];
+                                                                                            $caisse['montant_utilise'] = (float)$data['total_utilise'];
+                                                                                            $caisse['nombre_paiements'] = (int)$data['nb_paiements'];
+                                                                                            $caisse['solde_restant'] = $caisse['montant_alloue'] - $caisse['montant_utilise'];
+                                                                                
+                                                                                        } else {
+                                                                                            // Paiement par mode spécifique
+                                                                                            $stmt = $db->prepare("SELECT p.id, c.numero AS numero_commande, p.montant, p.banque, p.date_paiement, p.recu
+                                                                                                                  FROM PaiementCommande p
+                                                                                                                  JOIN CommandeAchat c ON p.id_CommandeAchat = c.id
+                                                                                                                  WHERE DATE(p.date_paiement) = ? AND p.mode_reglement = ?
+                                                                                                                  ORDER BY p.date_paiement ASC");
+                                                                                            $stmt->execute([$date, $mode]);
+                                                                                            $paiements = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                                                                                
+                                                                                            $stmt = $db->prepare("SELECT IFNULL(SUM(montant), 0) AS total_utilise, COUNT(*) as nb_paiements
+                                                                                                                  FROM PaiementCommande
+                                                                                                                  WHERE DATE(date_paiement) = ? AND mode_reglement = ?");
+                                                                                            $stmt->execute([$date, $mode]);
+                                                                                            $data = $stmt->fetch(PDO::FETCH_ASSOC);
+                                                                                
+                                                                                            $stmt = $db->prepare("SELECT montant_total
+                                                                                                                  FROM CaisseJournee
+                                                                                                                  WHERE date_jour = ? AND mode_reglement = ?");
+                                                                                            $stmt->execute([$date, $mode]);
+                                                                                            $row = $stmt->fetch(PDO::FETCH_ASSOC);
+                                                                                
+                                                                                            $montant_alloue = $row ? (float)$row['montant_total'] : 0;
+                                                                                            $montant_utilise = (float)$data['total_utilise'];
+                                                                                
+                                                                                            $caisse['montant_alloue'] = $montant_alloue;
+                                                                                            $caisse['montant_utilise'] = $montant_utilise;
+                                                                                            $caisse['nombre_paiements'] = (int)$data['nb_paiements'];
+                                                                                            $caisse['solde_restant'] = $montant_alloue - $montant_utilise;
+                                                                                        }
+                                                                                
+                                                                                        echo json_encode([
+                                                                                            "success" => true,
+                                                                                            "paiements" => $paiements,
+                                                                                            "caisse" => $caisse
+                                                                                        ]);
+                                                                                    } catch (Exception $e) {
+                                                                                        http_response_code(500);
+                                                                                        echo json_encode(["success" => false, "message" => $e->getMessage()]);
+                                                                                    }
+                                                                                    break;                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            
+                                                                                    
+                                                                                    case 108: // Charger toutes les lignes de toutes les demandes validées
+                                                                                        try {
+                                                                                            $connexion = $gc->getDb();
+                                                                                    
+                                                                                            $query = "
+                                                                                                SELECT 
+                                                                                                    lb.id AS id_LignesBudget,
+                                                                                                    lb.designation, 
+                                                                                                    lb.quantite, 
+                                                                                                    lb.prix_unitaire, 
+                                                                                                    lb.description,
+                                                                                                    r.nom AS rubrique, 
+                                                                                                    sr.nom AS sous_rubrique,
+                                                                                                    eb.titre AS titre_expression,
+                                                                                                    eb.idEB AS id_expression,
+                                                                                                    lb.budget_id,
+                                                                                    
+                                                                                                    COALESCE(lb.quantite - (
+                                                                                                        SELECT COALESCE(SUM(clb.quantite_reelle), 0)
+                                                                                                        FROM CommandeAchat_LigneBudget clb
+                                                                                                        JOIN CommandeAchat ca ON ca.id = clb.id_CommandeAchat
+                                                                                                        WHERE clb.id_LignesBudget = lb.id
+                                                                                                    ), lb.quantite) AS quantite_restante,
+                                                                                    
+                                                                                                    (
+                                                                                                        SELECT COALESCE(SUM(clb.quantite_reelle), 0)
+                                                                                                        FROM CommandeAchat_LigneBudget clb
+                                                                                                        JOIN CommandeAchat ca ON ca.id = clb.id_CommandeAchat
+                                                                                                        WHERE clb.id_LignesBudget = lb.id AND ca.etat = 'validé'
+                                                                                                    ) AS quantite_en_cours
+                                                                                    
+                                                                                                FROM lignebudget lb
+                                                                                                INNER JOIN expression_besoin eb ON lb.budget_id = eb.budget_id
+                                                                                                LEFT JOIN rubrique r ON lb.rubrique_id = r.id
+                                                                                                LEFT JOIN sousrubrique sr ON lb.sous_rubrique_id = sr.id
+                                                                                                WHERE eb.Etat_expression_besoin = 1
+                                                                                                ORDER BY lb.designation ASC
+                                                                                            ";
+                                                                                    
+                                                                                            $stmt = $connexion->prepare($query);
+                                                                                            $stmt->execute();
+                                                                                            $lignes = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                                                                                    
+                                                                                            if (!$lignes || count($lignes) === 0) {
+                                                                                                echo json_encode(["error" => "Aucune ligne de budget trouvée."]);
+                                                                                            } else {
+                                                                                                echo json_encode($lignes);
+                                                                                            }
+                                                                                        } catch (Exception $e) {
+                                                                                            http_response_code(500);
+                                                                                            echo json_encode(["error" => "Erreur lors du chargement : " . $e->getMessage()]);
+                                                                                        }
+                                                                                        break;
+                                                                                    
+                                                                                    
                                 }
                                 ?>

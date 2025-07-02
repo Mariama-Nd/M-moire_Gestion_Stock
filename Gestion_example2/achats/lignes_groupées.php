@@ -8,32 +8,14 @@ require_once '../../Categorie/Categorie/config/db.php';
 $db = new DB();
 $connexion = $db->connect();
 
-$idEB = $_GET['idEB'] ?? null;
-if (!$idEB) {
-    echo "Paramètre manquant.";
-    exit;
-}
+$titre = 'Lignes groupées';
 
-$titre = 'Expression inconnue';
-$budgetId = null;
-
-$stmt = $connexion->prepare("SELECT titre, budget_id FROM expression_besoin WHERE idEB = :id");
-$stmt->execute([':id' => $idEB]);
-$exp = $stmt->fetch(PDO::FETCH_ASSOC);
-
-if ($exp) {
-    $titre = $exp['titre'] ?? 'Sans titre';
-    $budgetId = $exp['budget_id'] ?? 0;
-} else {
-    echo "Expression introuvable.";
-    exit;
-}
 ?>
 
 <!DOCTYPE html>
 <html>
 <head>
-<title>Lignes de Budget</title>
+<title>Lignes de Budget Groupées</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css" rel="stylesheet">
 
@@ -49,6 +31,7 @@ if ($exp) {
     <link href="../../ressources/dist_assets/plugins/custom/datatables/datatables.bundle.css" rel="stylesheet" type="text/css" />
     <link rel="stylesheet" href="../../css/style.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
 </head>
 <style>
     body{
@@ -600,15 +583,10 @@ if ($exp) {
                     </div>
                 </div>
 
-                <input type="hidden" id="budgetId" value="<?= isset($budgetId) ? htmlspecialchars($budgetId) : '' ?>">
-
                 <div class="container bg-white shadow p-4 rounded">
                 <h3 class="text-success mb-4">
-                    Lignes de budget associées à la demande d'achat : 
-                    <strong><?= isset($titre) ? htmlspecialchars($titre) : '' ?></strong>
+                    Lignes de budget Groupées
                 </h3>
-
-                <input type="hidden" id="nomExpression" value="<?= isset($titre) ? htmlspecialchars($titre) : '' ?>">
 
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <a href="liste_expressions.php" class="btn btn-retour">← Retour</a>
@@ -620,10 +598,14 @@ if ($exp) {
                     </div>
                 </div>
 
+                <input type="hidden" id="budgetId" value="">
+                <input type="hidden" id="nomExpression" value="Groupées">
+
                 <table id="tableLignes" class="table table-bordered table-striped w-100 align-middle">
                     <thead class="table-success">
                         <tr>
                             <th><input type="checkbox" id="checkAll"></th>
+                            <th>Demande</th>
                             <th>Désignation</th>
                             <th>Quantité demandée</th>
                             <th>Quantité restante</th>
@@ -633,7 +615,6 @@ if ($exp) {
                             <th>Rubrique</th>
                             <th>Sous-rubrique</th>
                             <th>Description</th>
-                            <th>Action</th>
                         </tr>
                     </thead>
                     <tbody></tbody>
@@ -777,6 +758,7 @@ if ($exp) {
     <!-- SweetAlert2 -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
+    <script src="../../js/lignes_groupées.js"></script>
 
 </body>
 </html>

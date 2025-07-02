@@ -133,7 +133,7 @@ $(document).ready(function () {
 
     $('#btnExporterPDF').on('click', function () {
         lignesPourPreforma = [];
-        $('.check-ligne:checked').each(function () {
+        table.$('input.check-ligne:checked').each(function () {
             const row = table.row($(this).closest('tr')).data();
             if (row) lignesPourPreforma.push(row);
         });
@@ -232,7 +232,7 @@ $(document).ready(function () {
     $('#btnPasserCommandes').on('click', function () {
         const lignesSelectionnees = [];
     
-        $('.check-ligne:checked').each(function () {
+        table.$('input.check-ligne:checked').each(function () { // ✅ ici le changement
             const row = table.row($(this).closest('tr')).data();
             const idLigneBudget = $(this).data('id-ligne') || $(this).data('id_ligne');
             const quantiteRestante = parseFloat($(this).data('quantite-restante') || 0);

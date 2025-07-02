@@ -585,12 +585,14 @@
                         </div>
                     </div>
                 </div>
+
         <div class="container bg-white p-4 shadow rounded m-5">
         <div class="title-bar">
             <h1>Demandes d'achat</h1>
             <div>
                 <a href="budgets.php" class="btn btn-outline-success">Budgets</a>
                 <a href="../commande/Liste_bon_cmd.php" class="btn btn-outline-primary">Commandes</a>
+                <a href="lignes_groupées.php" class="btn btn-outline-dark">Lignes groupées</a>
             </div>
         </div>
 

@@ -215,6 +215,7 @@ function validerPaiement() {
   formData.append("option", 105);
   formData.append("id_commande", id_commande);
   formData.append("montant", montant);
+  formData.append("mode_reglement", mode);
 
   fetch("../../controlleur/controlleur.php", {
     method: "POST",
