@@ -1378,9 +1378,7 @@ case 29: //Valider livraison en mettant à jour le stock
                     }
                     break;                                
 
-    case 34:
-      
-    
+    case 34: 
         try {
             $r = "SELECT * FROM fournisseur WHERE nomF <> 'pas de fournisseur'";
             $requette =$gc->getDb()->prepare($r);
@@ -2525,8 +2523,7 @@ case 44:
                                                 echo json_encode(['success' => false, 'message' => "Erreur PDO : " . $e->getMessage()]);
                                             }
                                             break;
-                                                                                                                        
-                                    
+                                                                                                                                                           
                                     case 75: 
                                         try {
                                             if (empty($_GET['idBS'])) {
@@ -2639,7 +2636,6 @@ case 44:
                                                             continue;
                                                         }
                                         
-                                                        // Logique conditionnelle
                                                         if ($reste > 0) {
                                                             // Mode Enregistrement (cumulatif)
                                                             if ($quantite_demandee > $reste) {
@@ -2652,20 +2648,24 @@ case 44:
                                                                 continue;
                                                             }
                                         
-                                                            // Update ou insert selon existence
                                                             if ($qte_bs > 0) {
                                                                 $stmt = $gc->getDb()->prepare("UPDATE bon_sortie_produit SET quantite = quantite + :quantite, unite = :unite WHERE idBS = :idBS AND idP = :idP");
+                                                                $stmt->execute([
+                                                                    ':quantite' => $quantite_demandee,
+                                                                    ':unite' => $unite[$i],
+                                                                    ':idBS' => $idBS,
+                                                                    ':idP' => $id
+                                                                ]);
                                                             } else {
                                                                 $stmt = $gc->getDb()->prepare("INSERT INTO bon_sortie_produit (idBS, idP, quantite, unite, dateadd) VALUES (:idBS, :idP, :quantite, :unite, :dateadd)");
+                                                                $stmt->execute([
+                                                                    ':quantite' => $quantite_demandee,
+                                                                    ':unite' => $unite[$i],
+                                                                    ':idBS' => $idBS,
+                                                                    ':idP' => $id,
+                                                                    ':dateadd' => $date
+                                                                ]);
                                                             }
-                                        
-                                                            $stmt->execute([
-                                                                ':quantite' => $quantite_demandee,
-                                                                ':unite' => $unite[$i],
-                                                                ':idBS' => $idBS,
-                                                                ':idP' => $id,
-                                                                ':dateadd' => $date
-                                                            ]);
                                         
                                                         } else {
                                                             // Mode Remplacement (reste = 0)
@@ -2708,7 +2708,7 @@ case 44:
                                             } catch (Exception $e) {
                                                 echo json_encode(['success' => false, 'message' => $e->getMessage()]);
                                             }
-                                            break;
+                                            break;                                        
                                         
                                     case 77:
                                         if ($_SERVER['REQUEST_METHOD'] === 'POST') {

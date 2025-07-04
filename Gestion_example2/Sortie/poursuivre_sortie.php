@@ -756,28 +756,28 @@
                 </div>
 
                 <div class="page-wrapper d-flex justify-content-center align-items-start py-5">
-                    <div class="container" style="max-width: 1200px;">
-                        <form id="bonForm" method="post" class="p-4 bg-white rounded shadow-sm">
-                            <!-- En-tête -->
-                            <div class="page-header d-flex justify-content-between align-items-center px-4 py-3 mb-4 shadow-sm">
-                                <h1 class="mb-0">📦 <b>Sortie de stock - Poursuivre</b></h1>
-                                <a href='Liste_bon_sortie.php' class="btn btn-secondary">&larr; Retour</a>
-                            </div>
-
-                            <!-- Liste des produits -->
-                            <div id="productList" class="product-list mt-4">
-                                <h2 class="mb-3">Produits concernés</h2>
-                                <div id="productListScrollable">
-                                    <!-- Produits injectés dynamiquement -->
-                                </div>
-                            </div>
-
-                            <!-- Bouton global -->
-                            <button type="button" class="btn btn-success d-block mx-auto" id="enregistrerTout">
-                                ✅ Enregistrer Tout
-                            </button>
-                        </form>
+                <div class="container" style="max-width: 1200px;">
+                    <form id="bonForm" method="post" class="p-4 bg-white rounded shadow-sm">
+                    <!-- En-tête -->
+                    <div class="page-header d-flex justify-content-between align-items-center px-4 py-3 mb-4 shadow-sm">
+                        <h1 class="mb-0">📦 <b>Sortie de stock - Poursuivre</b></h1>
+                        <a href='Liste_bon_sortie.php' class="btn btn-secondary">&larr; Retour</a>
                     </div>
+
+                    <!-- Liste des produits -->
+                    <div id="productList" class="product-list mt-4">
+                        <h2 class="mb-3">Produits concernés</h2>
+                        <div id="productListScrollable">
+                        <!-- ✅ Checkbox ajoutée dynamiquement par JS -->
+                        </div>
+                    </div>
+
+                    <!-- Bouton global -->
+                    <button type="button" class="btn btn-success d-block mx-auto" id="enregistrerTout">
+                        ✅ Enregistrer Tout
+                    </button>
+                    </form>
+                </div>
                 </div>
 
     <div class="footer py-4 d-flex flex-lg-column" id="kt_footer">

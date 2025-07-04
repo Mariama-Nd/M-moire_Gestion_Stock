@@ -538,29 +538,32 @@
                     </div>
                 </div>
 
+                <!-- ✅ HTML + TABLE -->
                 <div class="container bg-white shadow p-4 rounded mt-4">
-  <div class="d-flex justify-content-between align-items-center mb-3">
-    <h3 class="text-success">Liste des Sortie</h3>
-    <button class="btn btn-success btn-custom" onclick="creerBS()">➕ Nouvelle Sortie</button>
-  </div>
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h3 class="text-success">Liste des Sorties</h3>
+                    <button class="btn btn-success btn-custom" onclick="creerBS()">➕ Nouvelle Sortie</button>
+                </div>
 
-  <!-- Tableau -->
-  <div class="table-responsive">
-    <table id="sales-table" class="table table-striped table-bordered w-100">
-      <thead class="table-success text-uppercase text-center">
-        <tr>
-          <th>Prénom</th>
-          <th>Nom</th>
-          <th>Service</th>
-          <th>Date</th>
-          <th>État</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody class="text-dark text-center"></tbody>
-    </table>
-  </div>
-</div>
+                <!-- Tableau -->
+                <div class="table-responsive">
+                    <table id="sales-table" class="table table-striped table-bordered w-100">
+                    <thead class="table-success text-uppercase text-center">
+                        <tr>
+                        <th>Prénom</th>
+                        <th>Nom</th>
+                        <th>Service</th>
+                        <th>Date</th>
+                        <th>État</th>
+                        <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="text-dark text-center">
+                        <!-- Données injectées dynamiquement par JS -->
+                    </tbody>
+                    </table>
+                </div>
+                </div>
 
     <div class="footer py-4 d-flex flex-lg-column" id="kt_footer">
                     <div class="container-fluid d-flex flex-column flex-md-row align-items-center justify-content-between">
@@ -582,32 +585,12 @@
 				</svg>
 			</span>
 		</div>
-    <script src="../../ressources/dist_assets/plugins/global/plugins.bundle.js"></script>
-    <script src="../../ressources/dist_assets/js/scripts.bundle.js"></script>
-    <script src="../../ressources/dist_assets/plugins/custom/datatables/datatables.bundle.js"></script>
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
-    <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
-    <script src="../../js/listeBonSortie.js"></script>
-    <!-- DataTables francisé -->
-<script>
-  $(document).ready(function () {
-    $('#sales-table').DataTable({
-      paging: true,
-      pageLength: 5,
-      lengthChange: true,
-      language: {
-        url: '//cdn.datatables.net/plug-ins/1.11.5/i18n/fr_fr.json'
-      }
-    });
-  });
-</script>
-</body>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+<script src="../../js/listeBonSortie.js"></script>
 
+</body>
 </html>
